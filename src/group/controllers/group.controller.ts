@@ -26,7 +26,7 @@ export class GroupController {
 
   @Put('/:group')
   @Role(AccountRolesType.editor)
-  async updateGroup(@Param('group') group: string, @Body() dto: GroupUpdateDto) {
-    // 서비스 호출
+  updateGroup(@Param('group') group: string, @Body() dto: GroupUpdateDto) {
+    return this.groupService.updateGroup(group, dto)
   }
 }

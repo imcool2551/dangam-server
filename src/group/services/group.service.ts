@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GroupCreateDto, GroupResponse } from '../dto/group.dto';
+import { GroupCreateDto, GroupResponse, GroupUpdateDto } from '../dto/group.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Group, GroupDocument } from '../schemas/group.schema';
 import { Model } from 'mongoose';
@@ -23,7 +23,7 @@ export class GroupService {
     throw 'TODO';
   }
 
-  findMyGroup(auth: AuthPayload): Promise<GroupResponse[]> {
+  async findMyGroup(auth: AuthPayload): Promise<GroupResponse[]> {
     // 1. aggregate API 사용
     // $match 로 auth.uid에 해당하는 AccountRoles 필터
     // $lookup 으로 Group 조인
@@ -36,6 +36,17 @@ export class GroupService {
     // Group id 추출
     // Group 검색
     // lastActivityAt 내림차순 정렬
+    throw 'TODO'
+  }
+
+  async updateGroup(group: string, dto: GroupUpdateDto): Promise<GroupResponse> {
+    // 1. 그룹 조회
+
+    // 2A. 없으면 예외 throw
+
+    // 2B. 있다면 수정(save API 사용)
+
+    // 3. 수정된 그룹 응답
     throw 'TODO'
   }
 }
