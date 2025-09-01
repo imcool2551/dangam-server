@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GroupModule } from './group/group.module';
 import { AuthModule } from './auth/auth.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from './auth/auth.module';
         uri: configService.get<string>('DB_URI'),
       }),
     }),
+    AccountModule,
     AuthModule,
     GroupModule,
   ],
