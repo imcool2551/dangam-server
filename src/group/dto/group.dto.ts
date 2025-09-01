@@ -1,6 +1,12 @@
 import { IsString } from 'class-validator';
+import { AccountRolesType } from '../../auth/auth.interface';
 
 export class GroupCreateDto {
+  @IsString()
+  displayName: string
+}
+
+export class GroupUpdateDto {
   @IsString()
   displayName: string
 }
@@ -8,4 +14,5 @@ export class GroupCreateDto {
 export class GroupResponse {
   _id: string
   displayName: string
+  role: AccountRolesType
 }

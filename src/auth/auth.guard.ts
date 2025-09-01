@@ -1,11 +1,10 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { AccountRolesType, AuthPayload } from './auth.interface';
-import { nanoid } from 'nanoid';
 
 const MockUser: AuthPayload = {
   sub: '1',
-  uid: nanoid(),
+  uid: 'frKUMGRJqXRD824qScf-P',
   displayName: 'tester',
   acl: {
     admin: AccountRolesType.nobody,

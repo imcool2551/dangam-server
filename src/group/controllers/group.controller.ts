@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { Auth } from '../../auth/auth.decorator';
 import { AccountRolesType, AuthPayload } from '../../auth/auth.interface';
-import { GroupCreateDto, GroupResponse } from '../dto/group.dto';
+import { GroupCreateDto, GroupResponse, GroupUpdateDto } from '../dto/group.dto';
 import { Role } from '../../auth/role.decorator';
 import { GroupService } from '../services/group.service';
 
@@ -16,5 +16,17 @@ export class GroupController {
     @Body() dto: GroupCreateDto,
   ): Promise<GroupResponse> {
     return this.groupService.create(auth, dto);
+  }
+
+  @Get()
+  @Role(AccountRolesType.guest)
+  findMyGroup(@Auth() auth: AuthPayload): Promise<GroupResponse[]> {
+    return this.groupService.findMyGroup(auth)
+  }
+
+  @Put('/:group')
+  @Role(AccountRolesType.editor)
+  async updateGroup(@Param('group') group: string, @Body() dto: GroupUpdateDto) {
+    // 서비스 호출
   }
 }
