@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { Group } from '../../group/schemas/group.schema';
 import { HydratedDocument } from 'mongoose';
 import { Account } from './account.schema';
+import { AccountRolesType } from '../../auth/auth.interface';
 
 @Schema({
   _id: false,
@@ -18,8 +19,8 @@ export class AccountRoles {
   @Prop({ type: String, required: true, ref: Group.name })
   group: string
 
-  @Prop({ type: String, enum: AccountRoles })
-  role: AccountRoles
+  @Prop({ type: String, enum: AccountRolesType })
+  role: AccountRolesType
 }
 
 export const AccountRolesSchema = SchemaFactory.createForClass(AccountRoles)
