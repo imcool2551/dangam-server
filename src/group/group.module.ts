@@ -3,25 +3,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Group, GroupSchema } from './schemas/group.schema';
 import { GroupController } from './controllers/group.controller';
 import { GroupService } from './services/group.service';
-import {
-  AccountRoles,
-  AccountRolesSchema,
-} from '../account/schema/account-roles.schema';
+import { AccountModule } from '../account/account.module';
+
+const GroupMongooseModule = MongooseModule.forFeature([
+  {
+    name: Group.name,
+    schema: GroupSchema,
+  },
+]);
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      {
-        name: Group.name,
-        schema: GroupSchema,
-      },
-      {
-        name: AccountRoles.name,
-        schema: AccountRolesSchema,
-      },
-    ]),
-  ],
+  imports: [AccountModule, GroupMongooseModule],
   controllers: [GroupController],
   providers: [GroupService],
+  exports: [GroupMongooseModule],
 })
 export class GroupModule {}
