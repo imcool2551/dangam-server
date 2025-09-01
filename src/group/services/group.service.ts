@@ -22,4 +22,20 @@ export class GroupService {
     // 3. 생성된 그룹 응답
     throw 'TODO';
   }
+
+  findMyGroup(auth: AuthPayload): Promise<GroupResponse[]> {
+    // 1. aggregate API 사용
+    // $match 로 auth.uid에 해당하는 AccountRoles 필터
+    // $lookup 으로 Group 조인
+    // $unwind로 group 펼치기
+    // $project로 _id, group, role 선택
+    // lastActivityAt 내림차순 정렬
+
+    // 2. 2번 조회
+    // AccountRoles 검색
+    // Group id 추출
+    // Group 검색
+    // lastActivityAt 내림차순 정렬
+    throw 'TODO'
+  }
 }
