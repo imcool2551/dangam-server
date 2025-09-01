@@ -3,6 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Group, GroupSchema } from './schemas/group.schema';
 import { GroupController } from './controllers/group.controller';
 import { GroupService } from './services/group.service';
+import {
+  AccountRoles,
+  AccountRolesSchema,
+} from '../account/schema/account-roles.schema';
 
 @Module({
   imports: [
@@ -10,6 +14,10 @@ import { GroupService } from './services/group.service';
       {
         name: Group.name,
         schema: GroupSchema,
+      },
+      {
+        name: AccountRoles.name,
+        schema: AccountRolesSchema,
       },
     ]),
   ],

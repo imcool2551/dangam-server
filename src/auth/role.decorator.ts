@@ -1,11 +1,11 @@
 import { SetMetadata } from '@nestjs/common';
-import { AccountRoles } from './auth.interface';
+import { AccountRolesType } from './auth.interface';
 
 export const ACCOUNT_ROLE_KEY = 'account-role';
-export const Role = (role: AccountRoles) => {
+export const Role = (role: AccountRolesType) => {
   return SetMetadata(ACCOUNT_ROLE_KEY, role);
 };
 
 export const Restricted = () => {
-  return SetMetadata(ACCOUNT_ROLE_KEY, AccountRoles.admin);
+  return SetMetadata(ACCOUNT_ROLE_KEY, AccountRolesType.admin);
 };

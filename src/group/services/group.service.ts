@@ -3,14 +3,17 @@ import { GroupCreateDto, GroupResponse } from '../dto/group.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Group, GroupDocument } from '../schemas/group.schema';
 import { Model } from 'mongoose';
+import { AccountRoles, AccountRolesDocument } from '../../account/schema/account-roles.schema';
+import { AuthPayload } from '../../auth/auth.interface';
 
 @Injectable()
 export class GroupService {
   constructor(
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
+    @InjectModel(AccountRoles.name) private readonly accountRolesModel: Model<AccountRolesDocument>
   ) {}
 
-  async create(dto: GroupCreateDto): Promise<GroupResponse> {
+  async create(auth: AuthPayload, dto: GroupCreateDto): Promise<GroupResponse> {
     // 1. 그룹 생성(create API 사용)
     // lastActivityAt 은 현재 unix timestamp 값(ms 단위). moment.valueOf()
 
