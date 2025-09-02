@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { Group } from '../../group/schemas/group.schema';
 import { HydratedDocument } from 'mongoose';
 import { Account } from './account.schema';
-import { AccountRolesType } from '../../auth/auth.interface';
+import { AccountRolesType } from '../../auth/interfaces/auth.interface';
 
 @Schema({
   _id: false,

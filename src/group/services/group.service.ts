@@ -11,7 +11,7 @@ import {
   AccountRoles,
   AccountRolesDocument,
 } from '../../account/schema/account-roles.schema';
-import { AccountRolesType, AuthPayload } from '../../auth/auth.interface';
+import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
 import moment from 'moment';
 
 @Injectable()

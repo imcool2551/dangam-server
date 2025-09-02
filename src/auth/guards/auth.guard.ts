@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { AccountRolesType, AuthPayload } from './auth.interface';
+import { AccountRolesType, AuthPayload } from '../interfaces/auth.interface';
 
 const MockUser: AuthPayload = {
   sub: '1',

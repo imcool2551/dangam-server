@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { Auth } from '../../auth/auth.decorator';
-import { AccountRolesType, AuthPayload } from '../../auth/auth.interface';
+import { Auth } from '../../auth/decorators/auth.decorator';
+import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
 import { GroupCreateDto, GroupResponse, GroupUpdateDto } from '../dto/group.dto';
-import { Role } from '../../auth/role.decorator';
+import { Role } from '../../auth/decorators/role.decorator';
 import { GroupService } from '../services/group.service';
 
 @Controller('group')

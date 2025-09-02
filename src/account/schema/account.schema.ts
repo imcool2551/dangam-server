@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { nanoid } from 'nanoid';
 import { HydratedDocument } from 'mongoose';
+import { SsoType } from '../../auth/interfaces/sso.enum';
 
 @Schema({
   _id: false,
@@ -10,13 +11,16 @@ export class Account {
   @Prop({ type: String, default: () => nanoid(16) })
   _id: string;
 
-  // ssoType - 나중에 추가될 예정
-  // ssoId - 나중에 추가될 예정
+  @Prop({ type: String, enum: SsoType, required: true })
+  ssoType: SsoType;
+
+  @Prop({ type: String, required: true })
+  ssoId: string;
 
   @Prop({ type: String, required: true })
   displayName: string;
 }
 
-export const AccountSchema = SchemaFactory.createForClass(Account)
+export const AccountSchema = SchemaFactory.createForClass(Account);
 
-export type AccountDocument = HydratedDocument<Account>
+export type AccountDocument = HydratedDocument<Account>;
