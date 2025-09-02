@@ -23,71 +23,17 @@ export class GroupService {
   ) {}
 
   async create(auth: AuthPayload, dto: GroupCreateDto): Promise<GroupResponse> {
-    const group = await this.groupModel.create({
-      displayName: dto.displayName,
-      lastActivityAt: moment().valueOf(),
-    });
-
-    await this.accountRolesModel.create({
-      group: group._id,
-      account: auth.uid,
-      role: AccountRolesType.owner,
-    });
-
-    return {
-      _id: group._id,
-      displayName: group.displayName,
-      lastActivityAt: group.lastActivityAt,
-      role: AccountRolesType.owner,
-    };
+    throw 'TODO'
   }
 
   async findMyGroup(auth: AuthPayload): Promise<GroupResponse[]> {
-    const result = await this.accountRolesModel.aggregate([
-      { $match: { account: auth.uid } },
-      {
-        $lookup: {
-          from: 'groups',
-          localField: 'group',
-          foreignField: '_id',
-          as: 'group',
-        },
-      },
-      { $unwind: '$group' },
-      { $project: { group: 1, role: 1 } },
-      {
-        $sort: {
-          'group.lastActivityAt': -1,
-        },
-      },
-    ]);
-
-    return result.map((each) => ({
-      _id: each.group._id,
-      displayName: each.group.displayName,
-      lastActivityAt: each.group.lastActivityAt,
-      role: each.role,
-    }));
+    throw 'TODO'
   }
 
   async updateGroup(
     group: string,
     dto: GroupUpdateDto,
   ): Promise<GroupResponse> {
-    const updatedGroup = await this.groupModel.findOneAndUpdate(
-      { _id: group },
-      { displayName: dto.displayName },
-      { new: true },
-    );
-
-    if (updatedGroup === null) {
-      throw new BadRequestException();
-    }
-
-    return {
-      _id: updatedGroup._id,
-      displayName: updatedGroup.displayName,
-      lastActivityAt: updatedGroup.lastActivityAt
-    };
+    throw 'TODO'
   }
 }
