@@ -14,5 +14,6 @@ export class GroupUpdateDto {
 export class GroupResponse {
   _id: string
   displayName: string
-  role: AccountRolesType
+  lastActivityAt: number
+  role?: AccountRolesType
 }

@@ -19,7 +19,7 @@ export class AccountRoles {
   @Prop({ type: String, required: true, ref: Group.name })
   group: string
 
-  @Prop({ type: String, enum: AccountRolesType })
+  @Prop({ type: Number, enum: AccountRolesType })
   role: AccountRolesType
 }
 

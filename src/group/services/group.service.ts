@@ -1,52 +1,93 @@
-import { Injectable } from '@nestjs/common';
-import { GroupCreateDto, GroupResponse, GroupUpdateDto } from '../dto/group.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  GroupCreateDto,
+  GroupResponse,
+  GroupUpdateDto,
+} from '../dto/group.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Group, GroupDocument } from '../schemas/group.schema';
 import { Model } from 'mongoose';
-import { AccountRoles, AccountRolesDocument } from '../../account/schema/account-roles.schema';
-import { AuthPayload } from '../../auth/auth.interface';
+import {
+  AccountRoles,
+  AccountRolesDocument,
+} from '../../account/schema/account-roles.schema';
+import { AccountRolesType, AuthPayload } from '../../auth/auth.interface';
+import moment from 'moment';
 
 @Injectable()
 export class GroupService {
   constructor(
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
-    @InjectModel(AccountRoles.name) private readonly accountRolesModel: Model<AccountRolesDocument>
+    @InjectModel(AccountRoles.name)
+    private readonly accountRolesModel: Model<AccountRolesDocument>,
   ) {}
 
   async create(auth: AuthPayload, dto: GroupCreateDto): Promise<GroupResponse> {
-    // 1. 그룹 생성(create API 사용)
-    // lastActivityAt 은 현재 unix timestamp 값(ms 단위). moment.valueOf()
+    const group = await this.groupModel.create({
+      displayName: dto.displayName,
+      lastActivityAt: moment().valueOf(),
+    });
 
-    // 2. 그룹을 생성한 사람을 owner로 하는 AccountRoles 생성
+    await this.accountRolesModel.create({
+      group: group._id,
+      account: auth.uid,
+      role: AccountRolesType.owner,
+    });
 
-    // 3. 생성된 그룹 응답
-    throw 'TODO';
+    return {
+      _id: group._id,
+      displayName: group.displayName,
+      lastActivityAt: group.lastActivityAt,
+      role: AccountRolesType.owner,
+    };
   }
 
   async findMyGroup(auth: AuthPayload): Promise<GroupResponse[]> {
-    // 1. aggregate API 사용
-    // $match 로 auth.uid에 해당하는 AccountRoles 필터
-    // $lookup 으로 Group 조인
-    // $unwind로 group 펼치기
-    // $project로 _id, group, role 선택
-    // lastActivityAt 내림차순 정렬
+    const result = await this.accountRolesModel.aggregate([
+      { $match: { account: auth.uid } },
+      {
+        $lookup: {
+          from: 'groups',
+          localField: 'group',
+          foreignField: '_id',
+          as: 'group',
+        },
+      },
+      { $unwind: '$group' },
+      { $project: { group: 1, role: 1 } },
+      {
+        $sort: {
+          'group.lastActivityAt': -1,
+        },
+      },
+    ]);
 
-    // 2. 2번 조회
-    // AccountRoles 검색
-    // Group id 추출
-    // Group 검색
-    // lastActivityAt 내림차순 정렬
-    throw 'TODO'
+    return result.map((each) => ({
+      _id: each.group._id,
+      displayName: each.group.displayName,
+      lastActivityAt: each.group.lastActivityAt,
+      role: each.role,
+    }));
   }
 
-  async updateGroup(group: string, dto: GroupUpdateDto): Promise<GroupResponse> {
-    // 1. 그룹 조회
+  async updateGroup(
+    group: string,
+    dto: GroupUpdateDto,
+  ): Promise<GroupResponse> {
+    const updatedGroup = await this.groupModel.findOneAndUpdate(
+      { _id: group },
+      { displayName: dto.displayName },
+      { new: true },
+    );
 
-    // 2A. 없으면 예외 throw
+    if (updatedGroup === null) {
+      throw new BadRequestException();
+    }
 
-    // 2B. 있다면 수정(save API 사용)
-
-    // 3. 수정된 그룹 응답
-    throw 'TODO'
+    return {
+      _id: updatedGroup._id,
+      displayName: updatedGroup.displayName,
+      lastActivityAt: updatedGroup.lastActivityAt
+    };
   }
 }
