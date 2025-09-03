@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { AccountRolesType, AuthPayload } from '../interfaces/auth.interface';
 
 const MockUser: AuthPayload = {
-  sub: '1',
   uid: 'frKUMGRJqXRD824qScf-P',
   displayName: 'tester',
   acl: {

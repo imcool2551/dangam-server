@@ -1,9 +1,19 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Account, AccountDocument } from '../../account/schema/account.schema';
-import { SignInDto, SignInResponse } from '../dto/auth.dto';
+import { AccountRoles } from '../../account/schema/account-roles.schema';
+import {
+  RefreshTokenResponse,
+  SignInDto,
+  SignInResponse,
+} from '../dto/auth.dto';
 import { SsoType } from '../interfaces/sso.enum';
 
 interface KakaoIdTokenPayload {
@@ -18,12 +28,16 @@ interface KakaoIdTokenPayload {
 
 @Injectable()
 export class AuthService {
-  private readonly KAKAO_JWKS_URI = 'https://kauth.kakao.com/.well-known/jwks.json';
+  private readonly KAKAO_JWKS_URI =
+    'https://kauth.kakao.com/.well-known/jwks.json';
   private readonly KAKAO_ISSUER = 'https://kauth.kakao.com';
   private kakaoJWKS = createRemoteJWKSet(new URL(this.KAKAO_JWKS_URI));
 
   constructor(
-    @InjectModel(Account.name) private readonly accountModel: Model<AccountDocument>,
+    @InjectModel(Account.name)
+    private readonly accountModel: Model<AccountDocument>,
+    @InjectModel(AccountRoles.name)
+    private readonly jwtService: JwtService,
   ) {}
 
   async signIn(dto: SignInDto): Promise<SignInResponse> {
@@ -62,10 +76,13 @@ export class AuthService {
 
       if (existingAccount) {
         // 기존 사용자 - 로그인
+        const tokens = this.generateTokens(existingAccount);
         return {
           uid: existingAccount._id,
           displayName: existingAccount.displayName,
           isNewUser: false,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
         };
       } else {
         // 신규 사용자 - 회원가입
@@ -76,11 +93,14 @@ export class AuthService {
         });
 
         const savedAccount = await newAccount.save();
+        const tokens = this.generateTokens(savedAccount);
 
         return {
           uid: savedAccount._id,
           displayName: savedAccount.displayName,
           isNewUser: true,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
         };
       }
     } catch (error) {
@@ -93,5 +113,42 @@ export class AuthService {
       throw new UnauthorizedException('Kakao authentication failed');
     }
   }
-}
 
+  private generateTokens(account: AccountDocument) {
+    const payload = {
+      uid: account._id,
+      displayName: account.displayName,
+    };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(
+      { uid: account._id },
+      { expiresIn: '30d' },
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    // refresh token 검증
+    const payload = this.jwtService.verify(refreshToken);
+
+    if (!payload.uid) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // 사용자 조회
+    const account = await this.accountModel.findById(payload.uid);
+    if (!account) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // 새로운 토큰 생성
+    const tokens = this.generateTokens(account);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+}
