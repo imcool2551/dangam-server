@@ -8,7 +8,6 @@ export enum AccountRolesType {
 
 export interface AuthPayload {
   uid: string;
-  displayName: string;
   acl: ACL;
 }
 

@@ -8,7 +8,6 @@ import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Account, AccountDocument } from '../../account/schema/account.schema';
-import { AccountRoles } from '../../account/schema/account-roles.schema';
 import {
   RefreshTokenResponse,
   SignInDto,
@@ -36,7 +35,6 @@ export class AuthService {
   constructor(
     @InjectModel(Account.name)
     private readonly accountModel: Model<AccountDocument>,
-    @InjectModel(AccountRoles.name)
     private readonly jwtService: JwtService,
   ) {}
 
