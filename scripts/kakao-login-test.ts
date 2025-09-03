@@ -1,7 +1,11 @@
 import axios from 'axios';
+import dotenv from 'dotenv'
+import * as path from 'node:path';
+
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 // 카카오 앱 설정 (실제 값으로 변경 필요)
-const KAKAO_REST_API_KEY = 'REPLACE_ME';
+const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY;
 const REDIRECT_URI = 'http://localhost:3000/auth/kakao/callback';
 
 // 서버 URL
@@ -9,6 +13,7 @@ const BASE_URL = 'http://localhost:3000';
 
 interface KakaoTokenResponse {
   access_token: string;
+  id_token: string;
   token_type: string;
   refresh_token: string;
   expires_in: number;
@@ -56,14 +61,13 @@ async function getKakaoUserInfo(accessToken: string): Promise<KakaoUserInfo> {
   }
 }
 
-async function signInToMyServer(ssoId: string, displayName: string): Promise<SignInResponse> {
+async function signInToMyServer(idToken: string): Promise<SignInResponse> {
   try {
     const response = await axios.post<SignInResponse>(
       `${BASE_URL}/auth/sign-in`,
       {
         ssoType: 'kakao',
-        ssoId,
-        displayName,
+        idToken,
       },
       {
         headers: {
@@ -100,7 +104,7 @@ async function kakaoLoginFlow(authorizationCode: string) {
     );
 
     console.log('✅ 카카오 토큰 획득 성공');
-    const { access_token } = tokenResponse.data;
+    const { access_token, id_token } = tokenResponse.data;
 
     // 2. 액세스 토큰으로 사용자 정보 조회
     console.log('👤 카카오 사용자 정보 조회 중...');
@@ -110,12 +114,9 @@ async function kakaoLoginFlow(authorizationCode: string) {
     console.log('사용자 ID:', userInfo.id);
     console.log('닉네임:', userInfo.properties?.nickname);
 
-    // 3. 내 서버에 로그인/회원가입
-    console.log('🚀 내 서버에 로그인 시도...');
-    const signInResult = await signInToMyServer(
-      userInfo.id.toString(),
-      userInfo.properties.nickname
-    );
+    // 3. ID 토큰으로 내 서버에 로그인/회원가입
+    console.log('🚀 ID 토큰으로 내 서버에 로그인 시도...');
+    const signInResult = await signInToMyServer(id_token);
 
     console.log('✅ 로그인 성공!');
     console.log('결과:', signInResult);
@@ -154,7 +155,7 @@ function getKakaoLoginUrl(): string {
 // 사용법 안내
 console.log('=== 카카오 로그인 테스트 ===');
 console.log('1. 먼저 아래 URL로 접속하여 카카오 로그인을 진행하세요:');
-// console.log(getKakaoLoginUrl());
+console.log(getKakaoLoginUrl());
 console.log('');
 console.log('2. 로그인 후 리다이렉트된 URL에서 code 파라미터를 복사하세요');
 console.log('3. 아래 함수를 호출하세요:');
@@ -162,7 +163,7 @@ console.log('   kakaoLoginFlow("복사한_인가_코드")');
 console.log('');
 
 // 예시: 인가 코드가 있을 때 실행
-const authCode = 'REPLACE_ME';
-kakaoLoginFlow(authCode);
+const authCode = 'NIF05MP9eqj03SPQ4KKmyYIauWrvyRdU3waxIJT8VSMlDLdXPNjZTQAAAAQKDRmQAAABmQ3wuw0icpf3YNJZ6g';
+// kakaoLoginFlow(authCode);
 
 export { kakaoLoginFlow, getKakaoLoginUrl };

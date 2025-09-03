@@ -7,11 +7,7 @@ export class SignInDto {
 
   @IsString()
   @IsNotEmpty()
-  ssoId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  displayName: string;
+  idToken: string;
 }
 
 export class SignInResponse {
