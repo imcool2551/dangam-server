@@ -1,4 +1,4 @@
-import { IsString, IsEnum } from 'class-validator';
+import { IsEnum } from 'class-validator';
 
 export enum ImageFileExtension {
   JPG = 'jpg',
@@ -11,9 +11,4 @@ export enum ImageFileExtension {
 export class GenerateUploadUrlDto {
   @IsEnum(ImageFileExtension)
   fileExtension: ImageFileExtension;
-}
-
-export class GenerateDownloadUrlDto {
-  @IsString()
-  key: string;
 }

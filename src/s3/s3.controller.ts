@@ -1,21 +1,25 @@
-import { Controller, Post, Body, Get, Query, UseGuards, Param, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { S3Service } from './s3.service';
-import { GenerateUploadUrlDto, GenerateDownloadUrlDto } from './dto/s3.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { Auth } from '../auth/decorators/auth.decorator';
-import { AuthPayload, AccountRolesType } from '../auth/interfaces/auth.interface';
+import { GenerateUploadUrlDto } from './dto/s3.dto';
+import { AccountRolesType } from '../auth/interfaces/auth.interface';
 import { Role } from '../auth/decorators/role.decorator';
 import { validateS3Key } from './utils/key';
 
 @Controller('s3')
-@UseGuards(AuthGuard)
 export class S3Controller {
   constructor(private readonly s3Service: S3Service) {}
 
   @Post('groups/:group/upload-url')
   @Role(AccountRolesType.member)
   async generateUploadUrl(
-    @Auth() auth: AuthPayload,
     @Param('group') groupId: string,
     @Body() dto: GenerateUploadUrlDto,
   ): Promise<{ uploadUrl: string; key: string }> {
@@ -25,15 +29,14 @@ export class S3Controller {
   @Get('groups/:group/download-url')
   @Role(AccountRolesType.member)
   async generateDownloadUrl(
-    @Auth() auth: AuthPayload,
     @Param('group') groupId: string,
-    @Query() dto: GenerateDownloadUrlDto,
+    @Query('key') key: string,
   ): Promise<{ downloadUrl: string }> {
-    if (!validateS3Key(dto.key, groupId)) {
+    if (!validateS3Key(key, groupId)) {
       throw new BadRequestException('Invalid key format or group mismatch');
     }
 
-    const downloadUrl = await this.s3Service.generateDownloadUrl(dto.key);
+    const downloadUrl = await this.s3Service.generateDownloadUrl(key);
     return { downloadUrl };
   }
 }
