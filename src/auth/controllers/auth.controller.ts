@@ -8,6 +8,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-in')
+  @PublicApi()
   signIn(@Body() dto: SignInDto): Promise<SignInResponse> {
     return this.authService.signIn(dto);
   }

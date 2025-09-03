@@ -10,7 +10,6 @@ export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
   @Post()
-  @Role(AccountRolesType.guest)
   create(
     @Auth() auth: AuthPayload,
     @Body() dto: GroupCreateDto,
@@ -19,7 +18,6 @@ export class GroupController {
   }
 
   @Get()
-  @Role(AccountRolesType.guest)
   findMyGroup(@Auth() auth: AuthPayload): Promise<GroupResponse[]> {
     return this.groupService.findMyGroup(auth)
   }

@@ -11,9 +11,13 @@ import {
   AccountRoles,
   AccountRolesDocument,
 } from '../../account/schema/account-roles.schema';
-import { AuthPayload, ACL } from '../interfaces/auth.interface';
+import {
+  AccountRolesType,
+  ACL,
+  AuthPayload,
+} from '../interfaces/auth.interface';
 import { Reflector } from '@nestjs/core';
-import { PUBLIC_API_KEY } from '../decorators/role.decorator';
+import { ACCOUNT_ROLE_KEY, PUBLIC_API_KEY } from '../decorators/role.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -26,12 +30,12 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_API_KEY, [
-        context.getHandler(),
-        context.getClass()
-      ])
+      const isPublic = this.reflector.getAllAndOverride<boolean>(
+        PUBLIC_API_KEY,
+        [context.getHandler(), context.getClass()],
+      );
 
-      if (isPublic) return true
+      if (isPublic) return true;
 
       const request = context.switchToHttp().getRequest();
 
@@ -69,9 +73,28 @@ export class AuthGuard implements CanActivate {
       };
 
       request.user = authPayload;
-      return true;
-    } catch {
-      throw new UnauthorizedException();
+
+      // Role 기반 권한 체크
+      const minimumRole = this.reflector.getAllAndOverride<AccountRolesType>(
+        ACCOUNT_ROLE_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
+      if (!minimumRole) return true;
+
+      // Group 파라미터 체크
+      const acceptableRoles = Object.values(AccountRolesType);
+      const group = (request.params.group ?? '') as string;
+      const groupRole = acl[group] ?? AccountRolesType.nobody;
+
+      const hasRequiredRole = acceptableRoles.includes(groupRole) && groupRole.valueOf() >= minimumRole.valueOf();
+
+      return hasRequiredRole;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Authentication failed');
     }
   }
 }
