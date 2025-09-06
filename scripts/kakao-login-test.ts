@@ -163,7 +163,7 @@ console.log('   kakaoLoginFlow("복사한_인가_코드")');
 console.log('');
 
 // 예시: 인가 코드가 있을 때 실행
-const authCode = 'ByaovudE-BR6C7M6UT6-gH_lqmzBzkUxzPniWVuMcEWzdBxmuRvFPQAAAAQKFxDvAAABmQ-Fq5WIenTzhLqDRQ';
+const authCode = '8aY6jBJ4VUggnoZMJS2xM4KB7v9UflfDCvXy22BYc67Ayd7wDaACmwAAAAQKFxTuAAABmR6sOZVHueF-5ScOZw';
 kakaoLoginFlow(authCode);
 
 export { kakaoLoginFlow, getKakaoLoginUrl };

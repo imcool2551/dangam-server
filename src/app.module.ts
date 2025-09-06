@@ -6,6 +6,7 @@ import { GroupModule } from './group/group.module';
 import { AuthModule } from './auth/auth.module';
 import { AccountModule } from './account/account.module';
 import { S3Module } from './s3/s3.module';
+import { DiaryModule } from './diary/diary.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { S3Module } from './s3/s3.module';
     }),
     AccountModule,
     AuthModule,
+    DiaryModule,
     GroupModule,
     S3Module,
   ],
