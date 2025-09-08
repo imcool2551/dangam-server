@@ -7,6 +7,8 @@ import { ImageTranscoder } from './components/image-transcoder';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountModule } from '../account/account.module';
 import { FcmModule } from '../fcm/fcm.module';
+import { DiaryQueryService } from './services/diary-query.service';
+import { GroupModule } from '../group/group.module';
 
 const DiaryMongooseModule = MongooseModule.forFeature([
   {
@@ -16,9 +18,9 @@ const DiaryMongooseModule = MongooseModule.forFeature([
 ]);
 
 @Module({
-  imports: [DiaryMongooseModule, AccountModule, FcmModule],
+  imports: [DiaryMongooseModule, AccountModule, GroupModule, FcmModule],
   controllers: [DiaryController],
-  providers: [DiaryService, DiaryImageProcessor, ImageTranscoder],
+  providers: [DiaryService, DiaryQueryService, DiaryImageProcessor, ImageTranscoder],
   exports: [DiaryMongooseModule],
 })
 export class DiaryModule {}

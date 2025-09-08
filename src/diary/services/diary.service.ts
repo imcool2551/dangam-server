@@ -22,6 +22,9 @@ import {
   AccountRoles,
   AccountRolesDocument,
 } from '../../account/schema/account-roles.schema';
+import { Group, GroupDocument } from '../../group/schemas/group.schema';
+import moment from 'moment';
+import { noop } from 'lodash';
 
 @Injectable()
 export class DiaryService {
@@ -32,6 +35,7 @@ export class DiaryService {
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
+    @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     private readonly configService: ConfigService,
     private readonly diaryImageProcessor: DiaryImageProcessor,
     private readonly fcmService: FcmService,
@@ -65,23 +69,14 @@ export class DiaryService {
 
     // Trigger async image transcoding (fire and forget)
     if (savedDiary.images.length > 0) {
-      this.diaryImageProcessor
-        .processAllImages(savedDiary._id)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to process images for diary ${savedDiary._id}`,
-            error,
-          );
-        });
+      this.diaryImageProcessor.processAllImages(savedDiary._id).then(noop);
     }
 
+    // Update group's last activity time
+    this.updateGroupActivity(group).then(noop);
+
     // Send FCM notifications to group members (excluding the author)
-    this.sendNotificationToGroupMembers(auth.uid, group).catch((error) => {
-      this.logger.error(
-        `Failed to send FCM notifications for diary ${savedDiary._id}`,
-        error,
-      );
-    });
+    this.sendNotificationToGroupMembers(auth.uid, group).then(noop);
 
     return {
       _id: savedDiary._id,
@@ -183,16 +178,48 @@ export class DiaryService {
     if (imageKeysChanged && dto.imageKeys && dto.imageKeys.length > 0) {
       this.diaryImageProcessor
         .processAllImages(updatedDiary!._id, true)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to process images for updated diary ${updatedDiary!._id}`,
-            error,
-          );
-        });
+        .then(noop);
     }
 
     return {
       _id: updatedDiary!._id,
     };
+  }
+
+  async delete(
+    auth: AuthPayload,
+    group: string,
+    diaryId: string,
+  ): Promise<DiaryResponse> {
+    // Find the diary and validate existence
+    const existingDiary = await this.diaryModel
+      .findOne({ _id: diaryId, group: group, deleted: false })
+      .exec();
+
+    if (!existingDiary) {
+      throw new BadRequestException('Diary not found');
+    }
+
+    // Validate that the user is the author
+    if (existingDiary.account !== auth.uid) {
+      throw new ForbiddenException(
+        'You can only delete your own diary entries',
+      );
+    }
+
+    // Soft delete by setting deleted flag to true
+    const deletedDiary = await this.diaryModel
+      .findByIdAndUpdate(diaryId, { deleted: true }, { new: true })
+      .exec();
+
+    return {
+      _id: deletedDiary!._id,
+    };
+  }
+
+  private async updateGroupActivity(group: string): Promise<void> {
+    await this.groupModel
+      .updateOne({ _id: group }, { lastActivityAt: moment().valueOf() })
+      .exec();
   }
 }
