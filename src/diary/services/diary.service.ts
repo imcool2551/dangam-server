@@ -6,7 +6,7 @@ import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { AssetLocation } from '../interfaces/diary.interface';
-import { DiaryImageProcessingService } from './diary-image-processing.service';
+import { DiaryImageProcessor } from '../components/diary-image-processor';
 
 @Injectable()
 export class DiaryService {
@@ -16,7 +16,7 @@ export class DiaryService {
   constructor(
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
     private readonly configService: ConfigService,
-    private readonly diaryImageProcessingService: DiaryImageProcessingService,
+    private readonly diaryImageProcessor: DiaryImageProcessor,
   ) {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
   }
@@ -47,7 +47,7 @@ export class DiaryService {
 
     // Trigger async image transcoding (fire and forget)
     if (savedDiary.images.length > 0) {
-      this.diaryImageProcessingService
+      this.diaryImageProcessor
         .processAllImages(savedDiary._id)
         .catch((error) => {
           this.logger.error(

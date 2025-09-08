@@ -16,8 +16,8 @@ export interface ImageMetadata {
 }
 
 @Injectable()
-export class ImageTranscodingService {
-  private readonly logger = new Logger(ImageTranscodingService.name);
+export class ImageTranscoder {
+  private readonly logger = new Logger(ImageTranscoder.name);
 
   async checkEngine(): Promise<boolean> {
     try {
@@ -37,13 +37,13 @@ export class ImageTranscodingService {
 
   async transcode(
     inputPath: string,
-    outputPath: string,
+    outputDir: string,
   ): Promise<TranscodeResult> {
     const metadata = await this.getMetadata(inputPath);
-    await fs.mkdir(outputPath, { recursive: true });
+    await fs.mkdir(outputDir, { recursive: true });
 
     const outputFilename = 'image.webp';
-    const finalOutputPath = path.join(outputPath, outputFilename);
+    const outputPath = path.join(outputDir, outputFilename);
 
     // Calculate optimal size for mobile while maintaining aspect ratio
     const maxDimension = 1200;
@@ -76,15 +76,15 @@ export class ImageTranscodingService {
       'webp:method=6',
       '-define',
       'webp:alpha-quality=90',
-      finalOutputPath,
+      outputPath,
     ];
 
     await this.runEngine(args);
 
-    const transcodedMetadata = await this.getMetadata(finalOutputPath);
+    const transcodedMetadata = await this.getMetadata(outputPath);
 
     return {
-      outputPath: finalOutputPath,
+      outputPath: outputPath,
       width: transcodedMetadata.width,
       height: transcodedMetadata.height,
     };
