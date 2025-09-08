@@ -1,11 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { Role } from '../../auth/decorators/role.decorator';
 import {
   AccountRolesType,
   AuthPayload,
 } from '../../auth/interfaces/auth.interface';
 import { Auth } from '../../auth/decorators/auth.decorator';
-import { CreateDiaryDto, UpdateDiaryDto, DiaryResponse } from '../dto/diary.dto';
+import { CreateDiaryDto, UpdateDiaryDto, DiaryResponse, ListDiaryDto, DiaryListResponse } from '../dto/diary.dto';
 import { DiaryService } from '../services/diary.service';
 import { DiaryQueryService } from '../services/diary-query.service';
 
@@ -35,6 +35,15 @@ export class DiaryController {
     @Body() dto: UpdateDiaryDto,
   ): Promise<DiaryResponse> {
     return this.diaryService.update(auth, group, diary, dto);
+  }
+
+  @Get('/:group')
+  @Role(AccountRolesType.member)
+  list(
+    @Param('group') group: string,
+    @Query() dto: ListDiaryDto,
+  ): Promise<DiaryListResponse> {
+    return this.diaryQueryService.list(group, dto);
   }
 
   @Get('/:group/:diary')

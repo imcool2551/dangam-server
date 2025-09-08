@@ -25,6 +25,7 @@ import {
 import { Group, GroupDocument } from '../../group/schemas/group.schema';
 import moment from 'moment';
 import { noop } from 'lodash';
+import { transformDiaryDocumentToResponse } from '../utils/diary-transformer';
 
 @Injectable()
 export class DiaryService {
@@ -78,9 +79,7 @@ export class DiaryService {
     // Send FCM notifications to group members (excluding the author)
     this.sendNotificationToGroupMembers(auth.uid, group).then(noop);
 
-    return {
-      _id: savedDiary._id,
-    };
+    return transformDiaryDocumentToResponse(savedDiary);
   }
 
   private async sendNotificationToGroupMembers(
@@ -181,9 +180,7 @@ export class DiaryService {
         .then(noop);
     }
 
-    return {
-      _id: updatedDiary!._id,
-    };
+    return transformDiaryDocumentToResponse(updatedDiary!);
   }
 
   async delete(
@@ -212,9 +209,7 @@ export class DiaryService {
       .findByIdAndUpdate(diaryId, { deleted: true }, { new: true })
       .exec();
 
-    return {
-      _id: deletedDiary!._id,
-    };
+    return transformDiaryDocumentToResponse(deletedDiary!);
   }
 
   private async updateGroupActivity(group: string): Promise<void> {

@@ -51,4 +51,7 @@ export class Diary {
 
 export const DiarySchema = SchemaFactory.createForClass(Diary);
 
-export type DiaryDocument = HydratedDocument<Diary>;
+export type DiaryDocument = HydratedDocument<Diary> & {
+  createdAt: Date
+  updatedAt: Date
+};

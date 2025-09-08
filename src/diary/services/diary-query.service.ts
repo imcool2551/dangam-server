@@ -2,12 +2,13 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { Model } from 'mongoose';
-import { DiaryResponse } from '../dto/diary.dto';
+import { DiaryResponse, ListDiaryDto, DiaryListResponse } from '../dto/diary.dto';
+import moment from 'moment';
+import { nextCursorOf, parseCursorOf } from '../../util.mongo';
+import { transformDiaryDocumentToResponse } from '../utils/diary-transformer';
 
 @Injectable()
 export class DiaryQueryService {
-  private readonly logger = new Logger(DiaryQueryService.name);
-
   constructor(
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
   ) {}
@@ -24,8 +25,39 @@ export class DiaryQueryService {
       throw new BadRequestException('Diary not found');
     }
 
+    return transformDiaryDocumentToResponse(diary);
+  }
+
+  async list(
+    group: string,
+    dto: ListDiaryDto,
+  ): Promise<DiaryListResponse> {
+    const limit = dto.limit || 20;
+    const query: any = { group, deleted: false };
+
+    // Add cursor filter if provided
+    const cursorFilter = parseCursorOf('createdAt', dto.next);
+    if (cursorFilter) {
+      Object.assign(query, cursorFilter);
+    }
+
+    // Find diaries with limit + 1 to check if there are more
+    let diaries = await this.diaryModel
+      .find(query)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .exec();
+
+    // Check if there are more items
+    const hasMore = diaries.length > limit;
+    diaries = hasMore ? diaries.slice(0, limit) : diaries;
+
+    // Generate response
+    const items = diaries.map(transformDiaryDocumentToResponse);
+
     return {
-      _id: diary._id,
+      items: items,
+      next: hasMore ? nextCursorOf(items, '_id', 'createdAt') : undefined,
     };
   }
 }
