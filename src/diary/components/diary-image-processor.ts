@@ -39,7 +39,7 @@ export class DiaryImageProcessor {
     });
   }
 
-  async processAllImages(diaryId: string): Promise<void> {
+  async processAllImages(diaryId: string, forceReprocess: boolean = false): Promise<void> {
     try {
       // Check if ImageMagick engine is available
       const engineAvailable = await this.imageTranscoder.checkEngine();
@@ -55,7 +55,7 @@ export class DiaryImageProcessor {
 
       for (let i = 0; i < diary.images.length; i++) {
         const image = diary.images[i];
-        if (image.src && !image.dst) {
+        if (image.src && (!image.dst || forceReprocess)) {
           try {
             await this.processImage(diaryId, i, image.src);
           } catch (error) {

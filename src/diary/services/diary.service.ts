@@ -1,5 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreateDiaryDto, DiaryResponse } from '../dto/diary.dto';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import {
+  CreateDiaryDto,
+  DiaryResponse,
+  UpdateDiaryDto,
+} from '../dto/diary.dto';
 import { AuthPayload } from '../../auth/interfaces/auth.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Diary, DiaryDocument } from '../schema/diary.schema';
@@ -8,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { AssetLocation } from '../interfaces/diary.interface';
 import { DiaryImageProcessor } from '../components/diary-image-processor';
 import { FcmService } from '../../fcm/fcm.service';
-import { Account, AccountDocument } from '../../account/schema/account.schema';
+import { AccountDocument } from '../../account/schema/account.schema';
 import {
   AccountRoles,
   AccountRolesDocument,
@@ -21,8 +30,6 @@ export class DiaryService {
 
   constructor(
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
-    @InjectModel(Account.name)
-    private readonly accountModel: Model<AccountDocument>,
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
     private readonly configService: ConfigService,
@@ -123,5 +130,69 @@ export class DiaryService {
         error,
       );
     }
+  }
+
+  async update(
+    auth: AuthPayload,
+    group: string,
+    diaryId: string,
+    dto: UpdateDiaryDto,
+  ): Promise<DiaryResponse> {
+    // Find the diary and validate existence
+    const existingDiary = await this.diaryModel
+      .findOne({ _id: diaryId, group: group, deleted: false })
+      .exec();
+
+    if (!existingDiary) {
+      throw new BadRequestException('Diary not found');
+    }
+
+    // Validate that the user is the author
+    if (existingDiary.account !== auth.uid) {
+      throw new ForbiddenException('You can only edit your own diary entries');
+    }
+
+    // Check if imageKeys changed
+    const oldImageKeys = existingDiary.images.map((img) => img.src.key);
+    const newImageKeys = dto.imageKeys || [];
+    const imageKeysChanged =
+      oldImageKeys.length !== newImageKeys.length ||
+      oldImageKeys.some((key, index) => key !== newImageKeys[index]);
+
+    // Prepare update data
+    const updateData: any = {
+      title: dto.title,
+      content: dto.content,
+    };
+
+    if (dto.imageKeys) {
+      updateData.images = dto.imageKeys.map((key) => ({
+        src: {
+          bucket: this.bucketName,
+          key: key,
+        } as AssetLocation,
+      }));
+    }
+
+    // Update the diary
+    const updatedDiary = await this.diaryModel
+      .findByIdAndUpdate(diaryId, updateData, { new: true })
+      .exec();
+
+    // Re-run transcoder if imageKeys changed
+    if (imageKeysChanged && dto.imageKeys && dto.imageKeys.length > 0) {
+      this.diaryImageProcessor
+        .processAllImages(updatedDiary!._id, true)
+        .catch((error) => {
+          this.logger.error(
+            `Failed to process images for updated diary ${updatedDiary!._id}`,
+            error,
+          );
+        });
+    }
+
+    return {
+      _id: updatedDiary!._id,
+    };
   }
 }
