@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { AccountModule } from './account/account.module';
 import { S3Module } from './s3/s3.module';
 import { DiaryModule } from './diary/diary.module';
+import { FcmModule } from './fcm/fcm.module';
 
 @Module({
   imports: [
@@ -14,17 +15,20 @@ import { DiaryModule } from './diary/diary.module';
       cache: true,
       isGlobal: true,
     }),
+    // Outer Dependency Modules
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('DB_URI'),
       }),
     }),
+    S3Module,
+    FcmModule,
+    // Business Modules
     AccountModule,
     AuthModule,
     DiaryModule,
     GroupModule,
-    S3Module,
   ],
   controllers: [AppController],
 })
