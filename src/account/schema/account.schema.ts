@@ -19,6 +19,9 @@ export class Account {
 
   @Prop({ type: String, required: true })
   displayName: string;
+
+  @Prop({ type: String })
+  fcmToken?: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

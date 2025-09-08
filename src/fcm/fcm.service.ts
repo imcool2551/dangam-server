@@ -32,4 +32,35 @@ export class FcmService {
         this.logger.error('Error sending notification message:', err);
       });
   }
+
+  async sendMultipleDataMessages(
+    messages: admin.messaging.TokenMessage[],
+    dryRun?: boolean,
+  ) {
+    const messagesToSend = messages.map((message) => ({
+      token: message.token,
+      data: message.data,
+    }));
+
+    return this.app
+      .messaging()
+      .sendEach(messagesToSend, dryRun)
+      .then((response) => {
+        this.logger.log(`${response.successCount} messages sent successfully`);
+        if (response.failureCount > 0) {
+          this.logger.warn(`${response.failureCount} messages failed to send`);
+          response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+              this.logger.error(
+                `Failed to send to token ${messages[idx].token}: ${resp.error?.message}`,
+              );
+            }
+          });
+        }
+        return response;
+      })
+      .catch((err) => {
+        this.logger.error('Error sending multiple notification messages:', err);
+      });
+  }
 }

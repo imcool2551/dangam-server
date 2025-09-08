@@ -7,6 +7,12 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { AssetLocation } from '../interfaces/diary.interface';
 import { DiaryImageProcessor } from '../components/diary-image-processor';
+import { FcmService } from '../../fcm/fcm.service';
+import { Account, AccountDocument } from '../../account/schema/account.schema';
+import {
+  AccountRoles,
+  AccountRolesDocument,
+} from '../../account/schema/account-roles.schema';
 
 @Injectable()
 export class DiaryService {
@@ -15,8 +21,13 @@ export class DiaryService {
 
   constructor(
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
+    @InjectModel(Account.name)
+    private readonly accountModel: Model<AccountDocument>,
+    @InjectModel(AccountRoles.name)
+    private readonly accountRolesModel: Model<AccountRolesDocument>,
     private readonly configService: ConfigService,
     private readonly diaryImageProcessor: DiaryImageProcessor,
+    private readonly fcmService: FcmService,
   ) {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
   }
@@ -57,8 +68,60 @@ export class DiaryService {
         });
     }
 
+    // Send FCM notifications to group members (excluding the author)
+    this.sendNotificationToGroupMembers(auth.uid, group).catch((error) => {
+      this.logger.error(
+        `Failed to send FCM notifications for diary ${savedDiary._id}`,
+        error,
+      );
+    });
+
     return {
       _id: savedDiary._id,
     };
+  }
+
+  private async sendNotificationToGroupMembers(
+    authorUid: string,
+    group: string,
+  ): Promise<void> {
+    try {
+      // Find all group members except the author
+      const groupMembers = await this.accountRolesModel
+        .find({ group: group, account: { $ne: authorUid } })
+        .populate('account');
+
+      // Filter members who have FCM tokens
+      const membersWithTokens = groupMembers
+        .map((member) => member.account as unknown as AccountDocument)
+        .filter((account) => account && account.fcmToken);
+
+      if (membersWithTokens.length === 0) {
+        return;
+      }
+
+      // Prepare FCM messages
+      const messages = membersWithTokens.map((account) => ({
+        token: account.fcmToken!,
+        data: {
+          title: 'New Diary Entry', // Placeholder
+          body: 'Someone shared a new diary entry in your group', // Placeholder
+          type: 'diary_created',
+          group: group,
+        },
+      }));
+
+      // Send notifications
+      await this.fcmService.sendMultipleDataMessages(messages);
+
+      this.logger.log(
+        `Sent FCM notifications to ${messages.length} group members`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error sending FCM notifications to group members:',
+        error,
+      );
+    }
   }
 }
