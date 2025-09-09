@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   GroupCreateDto,
+  GroupInviteResponse,
   GroupMemberResponse,
   GroupResponse,
   GroupUpdateDto,
@@ -136,6 +137,55 @@ export class GroupService {
     ]);
 
     return result;
+  }
+
+  async getGroupInviteLink(groupId: string): Promise<GroupInviteResponse> {
+    const group = await this.groupModel.findById(groupId);
+    if (!group) {
+      throw new BadRequestException('Group not found');
+    }
+
+    return {
+      inviteLink: `https://dangam.app/invite/${group.inviteToken}`
+    };
+  }
+
+  async joinGroupByInvite(auth: AuthPayload, inviteToken: string): Promise<GroupResponse> {
+    const group = await this.groupModel.findOne({ inviteToken });
+    if (!group) {
+      throw new BadRequestException('Invalid invite link');
+    }
+
+    // Check if user is already a member
+    const existingRole = await this.accountRolesModel.findOne({
+      account: auth.uid,
+      group: group._id
+    });
+
+    if (existingRole) {
+      throw new BadRequestException('Already a member of this group');
+    }
+
+    // Add user as member
+    await this.accountRolesModel.create({
+      account: auth.uid,
+      group: group._id,
+      role: AccountRolesType.member
+    });
+
+    // Update group's last activity
+    await this.groupModel.updateOne(
+      { _id: group._id },
+      { lastActivityAt: moment().valueOf() }
+    );
+
+    return {
+      _id: group._id,
+      displayName: group.displayName,
+      lastActivityAt: moment().valueOf(),
+      role: AccountRolesType.member,
+      thumbnailImage: group.thumbnailImage,
+    };
   }
 
   async updateGroup(

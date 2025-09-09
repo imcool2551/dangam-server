@@ -32,8 +32,8 @@ export class Group {
     dst?: AssetLocation
   }
 
-  // @Prop({ type: Object })
-  // invitation: IInvitation;
+  @Prop({ type: String, default: () => nanoid(16) })
+  inviteToken: string;
 
   @Prop({ type: Number, required: true })
   lastActivityAt: number;

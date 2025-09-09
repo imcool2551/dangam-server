@@ -6,6 +6,7 @@ import {
 } from '../../auth/interfaces/auth.interface';
 import {
   GroupCreateDto,
+  GroupInviteResponse,
   GroupMemberResponse,
   GroupResponse,
   GroupUpdateDto,
@@ -36,6 +37,22 @@ export class GroupController {
     @Param('group') group: string,
   ): Promise<GroupMemberResponse[]> {
     return this.groupService.findGroupMembers(group);
+  }
+
+  @Get('/:group/invite')
+  @Role(AccountRolesType.editor)
+  getGroupInviteLink(
+    @Param('group') group: string,
+  ): Promise<GroupInviteResponse> {
+    return this.groupService.getGroupInviteLink(group);
+  }
+
+  @Post('/join/:inviteToken')
+  joinGroupByInvite(
+    @Auth() auth: AuthPayload,
+    @Param('inviteToken') inviteToken: string,
+  ): Promise<GroupResponse> {
+    return this.groupService.joinGroupByInvite(auth, inviteToken);
   }
 
   @Put('/:group')

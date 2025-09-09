@@ -39,3 +39,7 @@ export class GroupMemberResponse {
   role: AccountRolesType;
   displayName: string;
 }
+
+export class GroupInviteResponse {
+  inviteLink: string;
+}
