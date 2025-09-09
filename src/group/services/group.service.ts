@@ -13,9 +13,11 @@ import {
   AccountRoles,
   AccountRolesDocument,
 } from '../../account/schema/account-roles.schema';
-import { Account, AccountDocument } from '../../account/schema/account.schema';
 import moment from 'moment';
-import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
+import {
+  AccountRolesType,
+  AuthPayload,
+} from '../../auth/interfaces/auth.interface';
 import { ConfigService } from '@nestjs/config';
 import { AssetLocation } from '../../diary/interfaces/diary.interface';
 import { GroupImageProcessor } from '../components/group-image-processor';
@@ -29,7 +31,6 @@ export class GroupService {
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
-    @InjectModel(Account.name) private readonly accountModel: Model<AccountDocument>,
     private readonly configService: ConfigService,
     private readonly groupImageProcessor: GroupImageProcessor,
   ) {
@@ -92,7 +93,9 @@ export class GroupService {
           as: 'memberRoles',
         },
       },
-      { $project: { group: 1, role: 1, memberCount: { $size: '$memberRoles' } } },
+      {
+        $project: { group: 1, role: 1, memberCount: { $size: '$memberRoles' } },
+      },
       {
         $sort: {
           'group.lastActivityAt': -1,
@@ -118,22 +121,22 @@ export class GroupService {
           from: 'accounts',
           localField: 'account',
           foreignField: '_id',
-          as: 'account'
-        }
+          as: 'account',
+        },
       },
       { $unwind: '$account' },
       {
         $sort: {
-          role: -1 // Role descending order (owner > editor > member)
-        }
+          role: -1, // Role descending order (owner > editor > member)
+        },
       },
       {
         $project: {
           uid: '$account._id',
           role: 1,
-          displayName: '$account.displayName'
-        }
-      }
+          displayName: '$account.displayName',
+        },
+      },
     ]);
 
     return result;
@@ -146,11 +149,14 @@ export class GroupService {
     }
 
     return {
-      inviteLink: `https://dangam.app/invite/${group.inviteToken}`
+      inviteLink: `https://dangam.app/invite/${group.inviteToken}`,
     };
   }
 
-  async joinGroupByInvite(auth: AuthPayload, inviteToken: string): Promise<GroupResponse> {
+  async joinGroupByInvite(
+    auth: AuthPayload,
+    inviteToken: string,
+  ): Promise<GroupResponse> {
     const group = await this.groupModel.findOne({ inviteToken });
     if (!group) {
       throw new BadRequestException('Invalid invite link');
@@ -159,7 +165,7 @@ export class GroupService {
     // Check if user is already a member
     const existingRole = await this.accountRolesModel.findOne({
       account: auth.uid,
-      group: group._id
+      group: group._id,
     });
 
     if (existingRole) {
@@ -170,13 +176,13 @@ export class GroupService {
     await this.accountRolesModel.create({
       account: auth.uid,
       group: group._id,
-      role: AccountRolesType.member
+      role: AccountRolesType.member,
     });
 
     // Update group's last activity
     await this.groupModel.updateOne(
       { _id: group._id },
-      { lastActivityAt: moment().valueOf() }
+      { lastActivityAt: moment().valueOf() },
     );
 
     return {
@@ -186,6 +192,28 @@ export class GroupService {
       role: AccountRolesType.member,
       thumbnailImage: group.thumbnailImage,
     };
+  }
+
+  async leaveGroup(auth: AuthPayload, group: string) {
+    const userRole = await this.accountRolesModel.findOne({
+      account: auth.uid,
+      group: group
+    });
+
+    if (!userRole) {
+      throw new BadRequestException('Not a member of this group');
+    }
+
+    if (userRole.role === AccountRolesType.owner) {
+      throw new BadRequestException('Owner cannot leave the group');
+    }
+
+    await this.accountRolesModel.deleteOne({
+      account: auth.uid,
+      group: group
+    });
+
+    return { message: 'Successfully left the group' };
   }
 
   async updateGroup(

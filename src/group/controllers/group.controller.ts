@@ -55,6 +55,15 @@ export class GroupController {
     return this.groupService.joinGroupByInvite(auth, inviteToken);
   }
 
+  @Post('/:group/leave')
+  @Role(AccountRolesType.member)
+  leaveGroup(
+    @Auth() auth: AuthPayload,
+    @Param('group') group: string,
+  ) {
+    return this.groupService.leaveGroup(auth, group);
+  }
+
   @Put('/:group')
   @Role(AccountRolesType.editor)
   updateGroup(@Param('group') group: string, @Body() dto: GroupUpdateDto) {
