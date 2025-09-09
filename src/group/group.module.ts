@@ -5,7 +5,7 @@ import { GroupController } from './controllers/group.controller';
 import { GroupService } from './services/group.service';
 import { AccountModule } from '../account/account.module';
 import { GroupImageProcessor } from './components/group-image-processor';
-import { ImageTranscoder } from '../diary/components/image-transcoder';
+import { ImageModule } from '../image/image.module';
 
 const GroupMongooseModule = MongooseModule.forFeature([
   {
@@ -15,9 +15,9 @@ const GroupMongooseModule = MongooseModule.forFeature([
 ]);
 
 @Module({
-  imports: [AccountModule, GroupMongooseModule],
+  imports: [AccountModule, GroupMongooseModule, ImageModule],
   controllers: [GroupController],
-  providers: [GroupService, GroupImageProcessor, ImageTranscoder],
+  providers: [GroupService, GroupImageProcessor],
   exports: [GroupMongooseModule],
 })
 export class GroupModule {}

@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { AssetLocation } from '../interfaces/diary.interface';
-import { ImageTranscoder } from './image-transcoder';
+import { ImageTranscoder } from '../../image/components/image-transcoder';
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3';
 import * as path from 'path';
 import * as fs from 'fs/promises';
