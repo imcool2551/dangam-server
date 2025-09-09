@@ -8,7 +8,7 @@ import {
   ListDiaryDto,
 } from '../dto/diary.dto';
 import { nextCursorOf, parseCursorOf } from '../../util.mongo';
-import { transformDiaryDocumentToResponse } from '../utils/diary-transformer';
+import { toDiaryResponse } from '../utils/diary-transformer';
 
 @Injectable()
 export class DiaryQueryService {
@@ -25,7 +25,7 @@ export class DiaryQueryService {
       throw new BadRequestException('Diary not found');
     }
 
-    return transformDiaryDocumentToResponse(diary);
+    return toDiaryResponse(diary);
   }
 
   async list(group: string, dto: ListDiaryDto): Promise<DiaryListResponse> {
@@ -50,7 +50,7 @@ export class DiaryQueryService {
     diaries = hasMore ? diaries.slice(0, limit) : diaries;
 
     // Generate response
-    const items = diaries.map(transformDiaryDocumentToResponse);
+    const items = diaries.map(toDiaryResponse);
 
     return {
       items: items,
