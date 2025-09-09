@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DiaryController } from './controllers/diary.controller';
+import { DiaryCommentController } from './controllers/diary-comment.controller';
 import { Diary, DiarySchema } from './schema/diary.schema';
+import {
+  DiaryComment,
+  DiaryCommentSchema,
+} from './schema/diary-comment.schema';
 import { DiaryService } from './services/diary.service';
+import { DiaryCommentService } from './services/diary-comment.service';
 import { DiaryImageProcessor } from './components/diary-image-processor';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountModule } from '../account/account.module';
@@ -16,12 +22,28 @@ const DiaryMongooseModule = MongooseModule.forFeature([
     name: Diary.name,
     schema: DiarySchema,
   },
+  {
+    name: DiaryComment.name,
+    schema: DiaryCommentSchema,
+  },
 ]);
 
 @Module({
-  imports: [DiaryMongooseModule, AccountModule, GroupModule, FcmModule, ImageModule, S3Module],
-  controllers: [DiaryController],
-  providers: [DiaryService, DiaryQueryService, DiaryImageProcessor],
+  imports: [
+    DiaryMongooseModule,
+    AccountModule,
+    GroupModule,
+    FcmModule,
+    ImageModule,
+    S3Module,
+  ],
+  controllers: [DiaryController, DiaryCommentController],
+  providers: [
+    DiaryService,
+    DiaryCommentService,
+    DiaryQueryService,
+    DiaryImageProcessor,
+  ],
   exports: [DiaryMongooseModule],
 })
 export class DiaryModule {}
