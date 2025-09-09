@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   GroupCreateDto,
   GroupInviteResponse,
-  GroupMemberResponse,
   GroupResponse,
   GroupUpdateDto,
 } from '../dto/group.dto';
@@ -113,34 +112,6 @@ export class GroupService {
     }));
   }
 
-  async findGroupMembers(group: string): Promise<GroupMemberResponse[]> {
-    const result = await this.accountRolesModel.aggregate([
-      { $match: { group: group } },
-      {
-        $lookup: {
-          from: 'accounts',
-          localField: 'account',
-          foreignField: '_id',
-          as: 'account',
-        },
-      },
-      { $unwind: '$account' },
-      {
-        $sort: {
-          role: -1, // Role descending order (owner > editor > member)
-        },
-      },
-      {
-        $project: {
-          uid: '$account._id',
-          role: 1,
-          displayName: '$account.displayName',
-        },
-      },
-    ]);
-
-    return result;
-  }
 
   async getGroupInviteLink(groupId: string): Promise<GroupInviteResponse> {
     const group = await this.groupModel.findById(groupId);
@@ -192,28 +163,6 @@ export class GroupService {
       role: AccountRolesType.member,
       thumbnailImage: group.thumbnailImage,
     };
-  }
-
-  async leaveGroup(auth: AuthPayload, group: string) {
-    const userRole = await this.accountRolesModel.findOne({
-      account: auth.uid,
-      group: group
-    });
-
-    if (!userRole) {
-      throw new BadRequestException('Not a member of this group');
-    }
-
-    if (userRole.role === AccountRolesType.owner) {
-      throw new BadRequestException('Owner cannot leave the group');
-    }
-
-    await this.accountRolesModel.deleteOne({
-      account: auth.uid,
-      group: group
-    });
-
-    return { message: 'Successfully left the group' };
   }
 
   async updateGroup(

@@ -1,6 +1,7 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { AccountRolesType } from '../../auth/interfaces/auth.interface';
 import { AssetLocation } from '../../diary/interfaces/diary.interface';
+import { Type } from 'class-transformer';
 
 export class GroupCreateDto {
   @IsString()
@@ -42,4 +43,19 @@ export class GroupMemberResponse {
 
 export class GroupInviteResponse {
   inviteLink: string;
+}
+
+export class UpdateMemberRoleDto {
+  @IsString()
+  @IsNotEmpty()
+  uid: string;
+
+  @IsEnum(AccountRolesType)
+  role: AccountRolesType;
+}
+
+export class RemoveMemberDto {
+  @IsString()
+  @IsNotEmpty()
+  uid: string;
 }

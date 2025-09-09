@@ -7,7 +7,6 @@ import {
 import {
   GroupCreateDto,
   GroupInviteResponse,
-  GroupMemberResponse,
   GroupResponse,
   GroupUpdateDto,
 } from '../dto/group.dto';
@@ -31,14 +30,6 @@ export class GroupController {
     return this.groupService.findMyGroup(auth);
   }
 
-  @Get('/:group/members')
-  @Role(AccountRolesType.member)
-  findGroupMembers(
-    @Param('group') group: string,
-  ): Promise<GroupMemberResponse[]> {
-    return this.groupService.findGroupMembers(group);
-  }
-
   @Get('/:group/invite')
   @Role(AccountRolesType.editor)
   getGroupInviteLink(
@@ -53,15 +44,6 @@ export class GroupController {
     @Param('inviteToken') inviteToken: string,
   ): Promise<GroupResponse> {
     return this.groupService.joinGroupByInvite(auth, inviteToken);
-  }
-
-  @Post('/:group/leave')
-  @Role(AccountRolesType.member)
-  leaveGroup(
-    @Auth() auth: AuthPayload,
-    @Param('group') group: string,
-  ) {
-    return this.groupService.leaveGroup(auth, group);
   }
 
   @Put('/:group')
