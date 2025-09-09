@@ -4,6 +4,10 @@ export function generateS3Key(groupId: string, fileExtension: string): string {
   return `groups/${groupId}/images/${nanoid(16)}.${fileExtension}`;
 }
 
+export function generateGroupThumbnailKey(fileExtension: string): string {
+  return `groups/thumbnails/${nanoid(16)}.${fileExtension}`;
+}
+
 export function validateS3Key(key: string, expectedGroupId: string): boolean {
   const s3KeyPattern = /^groups\/([^\/]+)\/images\/[^\/]+\.[a-zA-Z0-9]+$/;
   const match = key.match(s3KeyPattern);

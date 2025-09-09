@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { generateS3Key } from './utils/key';
+import { generateS3Key, generateGroupThumbnailKey } from './utils/key';
 
 @Injectable()
 export class S3Service {
@@ -22,6 +22,20 @@ export class S3Service {
 
   async generateUploadUrl(groupId: string, fileExtension: string): Promise<{ uploadUrl: string; key: string }> {
     const key = generateS3Key(groupId, fileExtension);
+    
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      ContentType: `image/${fileExtension}`,
+    });
+
+    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
+    return { uploadUrl, key };
+  }
+
+  async generateGroupThumbnailUploadUrl(fileExtension: string): Promise<{ uploadUrl: string; key: string }> {
+    const key = generateGroupThumbnailKey(fileExtension);
     
     const command = new PutObjectCommand({
       Bucket: this.bucketName,

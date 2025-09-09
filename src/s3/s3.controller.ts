@@ -17,6 +17,15 @@ import { validateS3Key } from './utils/key';
 export class S3Controller {
   constructor(private readonly s3Service: S3Service) {}
 
+  @Post('groups/thumbnails/upload-url')
+  async generateGroupThumbnailUploadUrl(
+    @Body() dto: GenerateUploadUrlDto,
+  ): Promise<{ uploadUrl: string; key: string }> {
+    return await this.s3Service.generateGroupThumbnailUploadUrl(
+      dto.fileExtension,
+    );
+  }
+
   @Post('groups/:group/upload-url')
   @Role(AccountRolesType.member)
   async generateUploadUrl(

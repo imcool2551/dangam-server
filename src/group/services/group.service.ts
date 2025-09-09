@@ -13,18 +13,38 @@ import {
 } from '../../account/schema/account-roles.schema';
 import moment from 'moment';
 import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
+import { ConfigService } from '@nestjs/config';
+import { AssetLocation } from '../../diary/interfaces/diary.interface';
+import { GroupImageProcessor } from '../components/group-image-processor';
+import { noop } from 'lodash';
 
 @Injectable()
 export class GroupService {
+  private readonly bucketName: string;
+
   constructor(
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
-  ) {}
+    private readonly configService: ConfigService,
+    private readonly groupImageProcessor: GroupImageProcessor,
+  ) {
+    this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+  }
 
   async create(auth: AuthPayload, dto: GroupCreateDto): Promise<GroupResponse> {
+    const thumbnailImage = dto.thumbnailImageKey
+      ? {
+          src: {
+            bucket: this.bucketName,
+            key: dto.thumbnailImageKey,
+          } as AssetLocation,
+        }
+      : undefined;
+
     const group = await this.groupModel.create({
       displayName: dto.displayName,
+      thumbnailImage,
       lastActivityAt: moment().valueOf(),
     });
 
@@ -34,11 +54,17 @@ export class GroupService {
       role: AccountRolesType.owner,
     });
 
+    // Trigger async thumbnail image transcoding (fire and forget)
+    if (group.thumbnailImage?.src) {
+      this.groupImageProcessor.processThumbnailImage(group._id).then(noop);
+    }
+
     return {
       _id: group._id,
       displayName: group.displayName,
       lastActivityAt: group.lastActivityAt,
       role: AccountRolesType.owner,
+      thumbnailImage: group.thumbnailImage,
     };
   }
 
@@ -67,6 +93,7 @@ export class GroupService {
       displayName: each.group.displayName,
       lastActivityAt: each.group.lastActivityAt,
       role: each.role,
+      thumbnailImage: each.group.thumbnailImage,
     }));
   }
 
@@ -74,9 +101,36 @@ export class GroupService {
     group: string,
     dto: GroupUpdateDto,
   ): Promise<GroupResponse> {
+    // Get existing group for comparison
+    const existingGroup = await this.groupModel.findById(group).exec();
+    if (!existingGroup) {
+      throw new BadRequestException();
+    }
+
+    // Check if thumbnail image changed
+    const oldThumbnailKey = existingGroup.thumbnailImage?.src?.key;
+    const newThumbnailKey = dto.thumbnailImageKey;
+    const thumbnailImageChanged = oldThumbnailKey !== newThumbnailKey;
+
+    // Prepare update data
+    const updateData: any = {
+      displayName: dto.displayName,
+    };
+
+    if (dto.thumbnailImageKey) {
+      updateData.thumbnailImage = {
+        src: {
+          bucket: this.bucketName,
+          key: dto.thumbnailImageKey,
+        } as AssetLocation,
+      };
+    } else {
+      updateData.thumbnailImage = undefined;
+    }
+
     const updatedGroup = await this.groupModel.findOneAndUpdate(
       { _id: group },
-      { displayName: dto.displayName },
+      updateData,
       { new: true },
     );
 
@@ -84,10 +138,18 @@ export class GroupService {
       throw new BadRequestException();
     }
 
+    // Re-run transcoder if thumbnail image changed
+    if (thumbnailImageChanged && dto.thumbnailImageKey) {
+      this.groupImageProcessor
+        .processThumbnailImage(updatedGroup._id, true)
+        .then(noop);
+    }
+
     return {
       _id: updatedGroup._id,
       displayName: updatedGroup.displayName,
-      lastActivityAt: updatedGroup.lastActivityAt
+      lastActivityAt: updatedGroup.lastActivityAt,
+      thumbnailImage: updatedGroup.thumbnailImage,
     };
   }
 }

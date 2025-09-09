@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { Model } from 'mongoose';
-import { DiaryResponse, ListDiaryDto, DiaryListResponse } from '../dto/diary.dto';
-import moment from 'moment';
+import {
+  DiaryListResponse,
+  DiaryResponse,
+  ListDiaryDto,
+} from '../dto/diary.dto';
 import { nextCursorOf, parseCursorOf } from '../../util.mongo';
 import { transformDiaryDocumentToResponse } from '../utils/diary-transformer';
 
@@ -13,10 +16,7 @@ export class DiaryQueryService {
     @InjectModel(Diary.name) private readonly diaryModel: Model<DiaryDocument>,
   ) {}
 
-  async findOne(
-    group: string,
-    diaryId: string,
-  ): Promise<DiaryResponse> {
+  async findOne(group: string, diaryId: string): Promise<DiaryResponse> {
     const diary = await this.diaryModel
       .findOne({ _id: diaryId, group: group, deleted: false })
       .exec();
@@ -28,10 +28,7 @@ export class DiaryQueryService {
     return transformDiaryDocumentToResponse(diary);
   }
 
-  async list(
-    group: string,
-    dto: ListDiaryDto,
-  ): Promise<DiaryListResponse> {
+  async list(group: string, dto: ListDiaryDto): Promise<DiaryListResponse> {
     const limit = dto.limit || 20;
     const query: any = { group, deleted: false };
 
