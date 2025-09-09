@@ -31,4 +31,11 @@ export class GroupResponse {
     src?: AssetLocation;
     dst?: AssetLocation;
   };
+  memberCount?: number;
+}
+
+export class GroupMemberResponse {
+  uid: string;
+  role: AccountRolesType;
+  displayName: string;
 }

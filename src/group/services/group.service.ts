@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   GroupCreateDto,
+  GroupMemberResponse,
   GroupResponse,
   GroupUpdateDto,
 } from '../dto/group.dto';
@@ -11,6 +12,7 @@ import {
   AccountRoles,
   AccountRolesDocument,
 } from '../../account/schema/account-roles.schema';
+import { Account, AccountDocument } from '../../account/schema/account.schema';
 import moment from 'moment';
 import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
 import { ConfigService } from '@nestjs/config';
@@ -26,6 +28,7 @@ export class GroupService {
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
+    @InjectModel(Account.name) private readonly accountModel: Model<AccountDocument>,
     private readonly configService: ConfigService,
     private readonly groupImageProcessor: GroupImageProcessor,
   ) {
@@ -80,7 +83,15 @@ export class GroupService {
         },
       },
       { $unwind: '$group' },
-      { $project: { group: 1, role: 1 } },
+      {
+        $lookup: {
+          from: 'accountroles',
+          localField: 'group._id',
+          foreignField: 'group',
+          as: 'memberRoles',
+        },
+      },
+      { $project: { group: 1, role: 1, memberCount: { $size: '$memberRoles' } } },
       {
         $sort: {
           'group.lastActivityAt': -1,
@@ -94,7 +105,37 @@ export class GroupService {
       lastActivityAt: each.group.lastActivityAt,
       role: each.role,
       thumbnailImage: each.group.thumbnailImage,
+      memberCount: each.memberCount,
     }));
+  }
+
+  async findGroupMembers(group: string): Promise<GroupMemberResponse[]> {
+    const result = await this.accountRolesModel.aggregate([
+      { $match: { group: group } },
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'account',
+          foreignField: '_id',
+          as: 'account'
+        }
+      },
+      { $unwind: '$account' },
+      {
+        $sort: {
+          role: -1 // Role descending order (owner > editor > member)
+        }
+      },
+      {
+        $project: {
+          uid: '$account._id',
+          role: 1,
+          displayName: '$account.displayName'
+        }
+      }
+    ]);
+
+    return result;
   }
 
   async updateGroup(
