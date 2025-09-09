@@ -10,7 +10,11 @@ import {
   CreateCommentDto,
   UpdateCommentDto,
 } from '../dto/diary-comment.dto';
-import { AuthPayload } from '../../auth/interfaces/auth.interface';
+import {
+  AccountRolesType,
+  AuthPayload,
+} from '../../auth/interfaces/auth.interface';
+import { DiaryDocument } from '../schema/diary.schema';
 
 @Injectable()
 export class DiaryCommentService {
@@ -134,14 +138,28 @@ export class DiaryCommentService {
   }
 
   async deleteComment(auth: AuthPayload, comment: string) {
-    const commentDoc = await this.diaryCommentModel.findOne({
-      _id: comment,
-      account: auth.uid,
-      deleted: false,
-    });
+    const commentDoc = await this.diaryCommentModel
+      .findOne({
+        _id: comment,
+        deleted: false,
+      })
+      .populate('diary');
 
     if (!commentDoc) {
-      throw new BadRequestException('Comment not found or access denied');
+      throw new BadRequestException('Comment not found');
+    }
+
+    // Get group from diary to check permissions
+    const diary = commentDoc.diary as unknown as DiaryDocument;
+    const group = diary.group;
+    const userGroupRole = auth.acl[group];
+    const isAuthor = commentDoc.account === auth.uid;
+    const isEditor = userGroupRole >= AccountRolesType.editor;
+
+    if (!isAuthor && !isEditor) {
+      throw new BadRequestException(
+        'You can only delete your own comments or need editor permissions',
+      );
     }
 
     commentDoc.deleted = true;

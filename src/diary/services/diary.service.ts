@@ -9,7 +9,7 @@ import {
   DiaryResponse,
   UpdateDiaryDto,
 } from '../dto/diary.dto';
-import { AuthPayload } from '../../auth/interfaces/auth.interface';
+import { AccountRolesType, AuthPayload } from '../../auth/interfaces/auth.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { Model } from 'mongoose';
@@ -129,12 +129,12 @@ export class DiaryService {
   async update(
     auth: AuthPayload,
     group: string,
-    diaryId: string,
+    diary: string,
     dto: UpdateDiaryDto,
   ): Promise<DiaryResponse> {
     // Find the diary and validate existence
     const existingDiary = await this.diaryModel
-      .findOne({ _id: diaryId, group: group, deleted: false })
+      .findOne({ _id: diary, group: group, deleted: false })
       .exec();
 
     if (!existingDiary) {
@@ -170,7 +170,7 @@ export class DiaryService {
 
     // Update the diary
     const updatedDiary = await this.diaryModel
-      .findByIdAndUpdate(diaryId, updateData, { new: true })
+      .findByIdAndUpdate(diary, updateData, { new: true })
       .exec();
 
     // Re-run transcoder if imageKeys changed
@@ -186,27 +186,31 @@ export class DiaryService {
   async delete(
     auth: AuthPayload,
     group: string,
-    diaryId: string,
+    diary: string,
   ): Promise<DiaryResponse> {
     // Find the diary and validate existence
     const existingDiary = await this.diaryModel
-      .findOne({ _id: diaryId, group: group, deleted: false })
+      .findOne({ _id: diary, group: group, deleted: false })
       .exec();
 
     if (!existingDiary) {
       throw new BadRequestException('Diary not found');
     }
 
-    // Validate that the user is the author
-    if (existingDiary.account !== auth.uid) {
+    // Check if user can delete: either author or editor+
+    const userGroupRole = auth.acl[group];
+    const isAuthor = existingDiary.account === auth.uid;
+    const isEditor = userGroupRole >= AccountRolesType.editor;
+
+    if (!isAuthor && !isEditor) {
       throw new ForbiddenException(
-        'You can only delete your own diary entries',
+        'You can only delete your own diary entries or need editor permissions',
       );
     }
 
     // Soft delete by setting deleted flag to true
     const deletedDiary = await this.diaryModel
-      .findByIdAndUpdate(diaryId, { deleted: true }, { new: true })
+      .findByIdAndUpdate(diary, { deleted: true }, { new: true })
       .exec();
 
     return toDiaryResponse(deletedDiary!);
