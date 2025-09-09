@@ -9,6 +9,7 @@ import { FcmModule } from '../fcm/fcm.module';
 import { DiaryQueryService } from './services/diary-query.service';
 import { GroupModule } from '../group/group.module';
 import { ImageModule } from '../image/image.module';
+import { S3Module } from '../s3/s3.module';
 
 const DiaryMongooseModule = MongooseModule.forFeature([
   {
@@ -18,7 +19,7 @@ const DiaryMongooseModule = MongooseModule.forFeature([
 ]);
 
 @Module({
-  imports: [DiaryMongooseModule, AccountModule, GroupModule, FcmModule, ImageModule],
+  imports: [DiaryMongooseModule, AccountModule, GroupModule, FcmModule, ImageModule, S3Module],
   controllers: [DiaryController],
   providers: [DiaryService, DiaryQueryService, DiaryImageProcessor],
   exports: [DiaryMongooseModule],

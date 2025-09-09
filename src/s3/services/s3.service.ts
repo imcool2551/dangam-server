@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { generateS3Key, generateGroupThumbnailKey } from './utils/key';
+import { generateS3Key, generateGroupThumbnailKey } from '../utils/key';
 
 @Injectable()
 export class S3Service {

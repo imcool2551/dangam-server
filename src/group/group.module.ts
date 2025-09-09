@@ -6,6 +6,7 @@ import { GroupService } from './services/group.service';
 import { AccountModule } from '../account/account.module';
 import { GroupImageProcessor } from './components/group-image-processor';
 import { ImageModule } from '../image/image.module';
+import { S3Module } from '../s3/s3.module';
 
 const GroupMongooseModule = MongooseModule.forFeature([
   {
@@ -15,7 +16,7 @@ const GroupMongooseModule = MongooseModule.forFeature([
 ]);
 
 @Module({
-  imports: [AccountModule, GroupMongooseModule, ImageModule],
+  imports: [AccountModule, GroupMongooseModule, ImageModule, S3Module],
   controllers: [GroupController],
   providers: [GroupService, GroupImageProcessor],
   exports: [GroupMongooseModule],

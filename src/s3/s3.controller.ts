@@ -7,7 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { S3Service } from './s3.service';
+import { S3Service } from './services/s3.service';
 import { GenerateUploadUrlDto } from './dto/s3.dto';
 import { AccountRolesType } from '../auth/interfaces/auth.interface';
 import { Role } from '../auth/decorators/role.decorator';
