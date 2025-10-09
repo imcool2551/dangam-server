@@ -52,6 +52,7 @@ export class DiaryResponse {
     src?: AssetLocation
     dst?: AssetLocation
   }[]
+  account: string
   displayName: string
   createdAt: number
   updatedAt: number

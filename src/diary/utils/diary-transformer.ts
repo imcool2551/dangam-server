@@ -8,6 +8,7 @@ export type PopulatedDiaryDocument = Omit<DiaryDocument, 'account'> & {
 
 export function toDiaryResponse(diary: PopulatedDiaryDocument): DiaryResponse {
   const account = diary.account;
+  const accountUid = typeof account === 'string' ? account : account._id;
   const displayName = typeof account === 'string' ? '' : account.displayName;
 
   return {
@@ -15,6 +16,7 @@ export function toDiaryResponse(diary: PopulatedDiaryDocument): DiaryResponse {
     title: diary.title,
     content: diary.content,
     images: diary.images,
+    account: accountUid,
     displayName: displayName,
     createdAt: diary.createdAt.getTime(),
     updatedAt: diary.updatedAt.getTime(),
