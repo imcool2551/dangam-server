@@ -8,7 +8,7 @@ import {
   ListDiaryDto,
 } from '../dto/diary.dto';
 import { nextCursorOf, parseCursorOf } from '../../util.mongo';
-import { toDiaryResponse } from '../utils/diary-transformer';
+import { toDiaryResponse, PopulatedDiaryDocument } from '../utils/diary-transformer';
 
 @Injectable()
 export class DiaryQueryService {
@@ -19,7 +19,8 @@ export class DiaryQueryService {
   async findOne(group: string, diaryId: string): Promise<DiaryResponse> {
     const diary = await this.diaryModel
       .findOne({ _id: diaryId, group: group, deleted: false })
-      .exec();
+      .populate('account', 'displayName')
+      .exec() as PopulatedDiaryDocument | null;
 
     if (!diary) {
       throw new BadRequestException('Diary not found');
@@ -43,7 +44,8 @@ export class DiaryQueryService {
       .find(query)
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1)
-      .exec();
+      .populate('account', 'displayName')
+      .exec() as PopulatedDiaryDocument[];
 
     // Check if there are more items
     const hasMore = diaries.length > limit;
