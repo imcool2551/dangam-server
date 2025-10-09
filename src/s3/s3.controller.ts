@@ -38,13 +38,9 @@ export class S3Controller {
   @Get('groups/:group/download-url')
   @Role(AccountRolesType.member)
   async generateDownloadUrl(
-    @Param('group') groupId: string,
+    @Param('group') _: string,
     @Query('key') key: string,
   ): Promise<{ downloadUrl: string }> {
-    if (!validateS3Key(key, groupId)) {
-      throw new BadRequestException('Invalid key format or group mismatch');
-    }
-
     const downloadUrl = await this.s3Service.generateDownloadUrl(key);
     return { downloadUrl };
   }
