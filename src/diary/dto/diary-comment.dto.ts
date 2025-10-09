@@ -25,6 +25,7 @@ export class CommentResponse {
     uid: string;
     displayName: string;
   };
+  deleted: boolean;
   createdAt: number;
   updatedAt: number;
   replies?: CommentResponse[];

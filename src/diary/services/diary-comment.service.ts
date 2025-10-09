@@ -83,12 +83,13 @@ export class DiaryCommentService {
       const commentResponse: CommentResponse = {
         _id: comment._id,
         diary: comment.diary,
-        content: comment.deleted ? '[삭제된 댓글입니다]' : comment.content,
+        content: comment.content,
         parentComment: comment.parentComment,
         author: {
           uid: comment.author._id,
           displayName: comment.author.displayName,
         },
+        deleted: comment.deleted || false,
         createdAt: comment.createdAt.getTime(),
         updatedAt: comment.updatedAt.getTime(),
         replies: [],
@@ -182,6 +183,7 @@ export class DiaryCommentService {
       diary: comment.diary,
       content: comment.content,
       parentComment: comment.parentComment,
+      deleted: comment.deleted ?? false,
       author: {
         uid: account._id,
         displayName: account.displayName,
