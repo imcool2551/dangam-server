@@ -56,7 +56,6 @@ export class DiaryCommentService {
       {
         $match: {
           diary: diary,
-          deleted: false,
         },
       },
       {
@@ -84,7 +83,7 @@ export class DiaryCommentService {
       const commentResponse: CommentResponse = {
         _id: comment._id,
         diary: comment.diary,
-        content: comment.content,
+        content: comment.deleted ? '[삭제된 댓글입니다]' : comment.content,
         parentComment: comment.parentComment,
         author: {
           uid: comment.author._id,

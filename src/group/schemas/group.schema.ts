@@ -37,6 +37,9 @@ export class Group {
 
   @Prop({ type: Number, required: true })
   lastActivityAt: number;
+
+  @Prop({ type: Boolean, default: false })
+  deleted: boolean;
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);

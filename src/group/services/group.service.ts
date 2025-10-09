@@ -84,6 +84,7 @@ export class GroupService {
         },
       },
       { $unwind: '$group' },
+      { $match: { 'group.deleted': { $ne: true } } },
       {
         $lookup: {
           from: 'accountroles',
@@ -219,5 +220,21 @@ export class GroupService {
       lastActivityAt: updatedGroup.lastActivityAt,
       thumbnailImage: updatedGroup.thumbnailImage,
     };
+  }
+
+  async deleteGroup(groupId: string): Promise<void> {
+    const group = await this.groupModel.findById(groupId).exec();
+    if (!group) {
+      throw new BadRequestException('Group not found');
+    }
+
+    if (group.deleted) {
+      throw new BadRequestException('Group is already deleted');
+    }
+
+    await this.groupModel.updateOne(
+      { _id: groupId },
+      { deleted: true }
+    ).exec();
   }
 }
