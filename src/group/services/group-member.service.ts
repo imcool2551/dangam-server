@@ -14,12 +14,16 @@ import {
   AccountRolesType,
   AuthPayload,
 } from '../../auth/interfaces/auth.interface';
+import { Group, GroupDocument } from '../schemas/group.schema';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class GroupMemberService {
   constructor(
     @InjectModel(AccountRoles.name)
     private readonly accountRolesModel: Model<AccountRolesDocument>,
+    @InjectModel(Group.name)
+    private readonly groupModel: Model<GroupDocument>,
   ) {}
 
   async findGroupMembers(group: string): Promise<GroupMemberResponse[]> {
@@ -113,6 +117,12 @@ export class GroupMemberService {
       account: dto.uid,
       group: group,
     });
+
+    // Regenerate invite token to prevent removed member from rejoining
+    await this.groupModel.updateOne(
+      { _id: group },
+      { inviteToken: nanoid(16) }
+    );
 
     return { message: 'Member removed successfully' };
   }
