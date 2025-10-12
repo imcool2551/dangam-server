@@ -2,18 +2,23 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Account, AccountDocument } from '../../account/schema/account.schema';
+import { AccountRoles, AccountRolesDocument } from '../../account/schema/account-roles.schema';
+import { Diary, DiaryDocument } from '../../diary/schema/diary.schema';
+import { Group, GroupDocument } from '../../group/schemas/group.schema';
 import {
   RefreshTokenResponse,
   SignInDto,
   SignInResponse,
 } from '../dto/auth.dto';
 import { SsoType } from '../interfaces/sso.enum';
+import { AccountRolesType } from '../interfaces/auth.interface';
 
 interface KakaoIdTokenPayload {
   iss: string;
@@ -35,6 +40,12 @@ export class AuthService {
   constructor(
     @InjectModel(Account.name)
     private readonly accountModel: Model<AccountDocument>,
+    @InjectModel(AccountRoles.name)
+    private readonly accountRolesModel: Model<AccountRolesDocument>,
+    @InjectModel(Diary.name)
+    private readonly diaryModel: Model<DiaryDocument>,
+    @InjectModel(Group.name)
+    private readonly groupModel: Model<GroupDocument>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -148,5 +159,40 @@ export class AuthService {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
+  }
+
+  async deleteAccount(accountId: string): Promise<void> {
+    // 사용자가 owner인 그룹이 있는지 확인 (삭제되지 않은 그룹만)
+    const ownerRoles = await this.accountRolesModel.find({
+      account: accountId,
+      role: AccountRolesType.owner,
+    });
+
+    if (ownerRoles.length > 0) {
+      // owner인 그룹들 중 삭제되지 않은 그룹 확인
+      const groupIds = ownerRoles.map(role => role.group);
+      const activeGroups = await this.groupModel.find({
+        _id: { $in: groupIds },
+        deleted: false,
+      });
+
+      if (activeGroups.length > 0) {
+        throw new ConflictException(
+          'Cannot delete account. You are the owner of one or more groups. Please transfer ownership or delete the groups first.',
+        );
+      }
+    }
+
+    // 사용자의 모든 일기 soft delete
+    await this.diaryModel.updateMany(
+      { account: accountId },
+      { deleted: true },
+    );
+
+    // 사용자의 모든 그룹 멤버십 삭제
+    await this.accountRolesModel.deleteMany({ account: accountId });
+
+    // 계정 삭제
+    await this.accountModel.findByIdAndDelete(accountId);
   }
 }

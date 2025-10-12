@@ -1,7 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Delete, HttpCode } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { SignInResponse, SignInDto, RefreshTokenDto, RefreshTokenResponse } from '../dto/auth.dto';
 import { PublicApi } from '../decorators/role.decorator';
+import { Auth } from '../decorators/auth.decorator';
+import { AuthPayload } from '../interfaces/auth.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -17,5 +19,10 @@ export class AuthController {
   @PublicApi()
   refresh(@Body() dto: RefreshTokenDto): Promise<RefreshTokenResponse> {
     return this.authService.refreshToken(dto.refreshToken);
+  }
+
+  @Delete('account')
+  deleteAccount(@Auth() auth: AuthPayload): Promise<void> {
+    return this.authService.deleteAccount(auth.uid);
   }
 }

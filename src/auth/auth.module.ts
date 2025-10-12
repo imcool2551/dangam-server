@@ -12,10 +12,14 @@ import {
   AccountRolesSchema,
 } from '../account/schema/account-roles.schema';
 import { AccountModule } from '../account/account.module';
+import { DiaryModule } from '../diary/diary.module';
+import { GroupModule } from '../group/group.module';
 
 @Module({
   imports: [
     AccountModule,
+    DiaryModule,
+    GroupModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         secret:
