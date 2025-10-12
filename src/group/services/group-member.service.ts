@@ -56,7 +56,7 @@ export class GroupMemberService {
   }
 
   // Owner only - update member role
-  async updateMemberRole(group: string, dto: UpdateMemberRoleDto) {
+  async updateMemberRole(auth: AuthPayload, group: string, dto: UpdateMemberRoleDto) {
     const existingMember = await this.accountRolesModel.findOne({
       account: dto.uid,
       group: group,
@@ -66,14 +66,36 @@ export class GroupMemberService {
       throw new BadRequestException('Member not found in this group');
     }
 
-    // Cannot change owner role
+    // Cannot change owner role (except when transferring to another member)
     if (existingMember.role === AccountRolesType.owner) {
       throw new BadRequestException('Cannot change owner role');
     }
 
-    // Cannot assign owner role
+    // If transferring owner role
     if (dto.role === AccountRolesType.owner) {
-      throw new BadRequestException('Cannot assign owner role');
+      // Downgrade current owner to editor
+      await this.accountRolesModel.updateOne(
+        {
+          account: auth.uid,
+          group: group,
+        },
+        {
+          role: AccountRolesType.editor,
+        },
+      );
+
+      // Assign new owner
+      await this.accountRolesModel.updateOne(
+        {
+          account: dto.uid,
+          group: group,
+        },
+        {
+          role: AccountRolesType.owner,
+        },
+      );
+
+      return { message: 'Owner role transferred successfully' };
     }
 
     await this.accountRolesModel.updateOne(

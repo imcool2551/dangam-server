@@ -27,10 +27,11 @@ export class GroupMemberController {
   @Put('/:group/members/role')
   @Role(AccountRolesType.owner)
   updateMemberRole(
+    @Auth() auth: AuthPayload,
     @Param('group') group: string,
     @Body() dto: UpdateMemberRoleDto,
   ) {
-    return this.groupMemberService.updateMemberRole(group, dto);
+    return this.groupMemberService.updateMemberRole(auth, group, dto);
   }
 
   @Post('/:group/members/remove')
