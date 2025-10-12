@@ -5,6 +5,8 @@ import {
   AccountRolesSchema,
 } from './schema/account-roles.schema';
 import { Account, AccountSchema } from './schema/account.schema';
+import { AccountController } from './controllers/account.controller';
+import { AccountService } from './services/account.service';
 
 const AccountMongooseModule = MongooseModule.forFeature([
   {
@@ -19,6 +21,8 @@ const AccountMongooseModule = MongooseModule.forFeature([
 
 @Module({
   imports: [AccountMongooseModule],
+  controllers: [AccountController],
+  providers: [AccountService],
   exports: [AccountMongooseModule],
 })
 export class AccountModule {}
