@@ -77,7 +77,7 @@ export class DiaryService {
     this.updateGroupActivity(group).then(noop);
 
     // Send FCM notifications to group members (excluding the author)
-    this.sendNotificationToGroupMembers(auth.uid, group).then(noop);
+    this.sendNotificationToGroupMembers(auth.uid, group, savedDiary._id).then(noop);
 
     return toDiaryResponse(savedDiary as PopulatedDiaryDocument);
   }
@@ -85,12 +85,34 @@ export class DiaryService {
   private async sendNotificationToGroupMembers(
     authorUid: string,
     group: string,
+    diaryId: string,
   ): Promise<void> {
     try {
       // Find all group members except the author
       const groupMembers = await this.accountRolesModel
         .find({ group: group, account: { $ne: authorUid } })
         .populate('account');
+
+      // Get author info
+      const author = await this.accountRolesModel
+        .findOne({ group: group, account: authorUid })
+        .populate('account')
+        .exec();
+
+      if (!author || !author.account) {
+        this.logger.warn('Author not found for notification');
+        return;
+      }
+
+      const authorAccount = author.account as unknown as AccountDocument;
+      const authorName = authorAccount.displayName;
+
+      // Get group info
+      const groupDoc = await this.groupModel.findById(group).exec();
+      if (!groupDoc) {
+        this.logger.warn('Group not found for notification');
+        return;
+      }
 
       // Filter members who have FCM tokens
       const membersWithTokens = groupMembers
@@ -101,22 +123,25 @@ export class DiaryService {
         return;
       }
 
-      // Prepare FCM messages
-      const messages = membersWithTokens.map((account) => ({
+      // Prepare FCM notifications
+      const notifications = membersWithTokens.map((account) => ({
         token: account.fcmToken!,
+        title: '새로운 일기가 작성되었습니다',
+        body: `${authorName}님이 새 일기를 작성했습니다`,
         data: {
-          title: 'New Diary Entry', // Placeholder
-          body: 'Someone shared a new diary entry in your group', // Placeholder
-          type: 'diary_created',
-          group: group,
+          type: 'diary',
+          groupId: group,
+          groupName: groupDoc.displayName,
+          diaryId: diaryId,
+          authorName: authorName,
         },
       }));
 
       // Send notifications
-      await this.fcmService.sendMultipleDataMessages(messages);
+      await this.fcmService.sendMultipleNotifications(notifications);
 
       this.logger.log(
-        `Sent FCM notifications to ${messages.length} group members`,
+        `Sent FCM notifications to ${notifications.length} group members`,
       );
     } catch (error) {
       this.logger.error(

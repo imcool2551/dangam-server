@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -14,13 +14,25 @@ import {
   AccountRolesType,
   AuthPayload,
 } from '../../auth/interfaces/auth.interface';
-import { DiaryDocument } from '../schema/diary.schema';
+import { Diary, DiaryDocument } from '../schema/diary.schema';
+import { FcmService } from '../../fcm/fcm.service';
+import { Account, AccountDocument } from '../../account/schema/account.schema';
+import { Group, GroupDocument } from '../../group/schemas/group.schema';
 
 @Injectable()
 export class DiaryCommentService {
+  private readonly logger = new Logger(DiaryCommentService.name);
+
   constructor(
     @InjectModel(DiaryComment.name)
     private readonly diaryCommentModel: Model<DiaryCommentDocument>,
+    @InjectModel(Diary.name)
+    private readonly diaryModel: Model<DiaryDocument>,
+    @InjectModel(Account.name)
+    private readonly accountModel: Model<AccountDocument>,
+    @InjectModel(Group.name)
+    private readonly groupModel: Model<GroupDocument>,
+    private readonly fcmService: FcmService,
   ) {}
 
   async createComment(
@@ -46,6 +58,11 @@ export class DiaryCommentService {
       account: auth.uid,
       content: dto.content,
       parentComment: dto.parentComment,
+    });
+
+    // Send FCM notification (fire and forget)
+    this.sendCommentNotification(auth.uid, diary, comment._id, dto.parentComment).catch((err) => {
+      this.logger.error('Error sending comment notification:', err);
     });
 
     return this.buildCommentResponse(comment);
@@ -166,6 +183,110 @@ export class DiaryCommentService {
     await commentDoc.save();
 
     return { message: 'Comment deleted successfully' };
+  }
+
+  private async sendCommentNotification(
+    authorUid: string,
+    diaryId: string,
+    commentId: string,
+    parentCommentId?: string,
+  ): Promise<void> {
+    try {
+      // Get diary with group info
+      const diaryDoc = await this.diaryModel.findById(diaryId).exec();
+
+      if (!diaryDoc) {
+        this.logger.warn('Diary not found for comment notification');
+        return;
+      }
+
+      // Get comment author info
+      const commentAuthor = await this.accountModel.findById(authorUid).exec();
+      if (!commentAuthor) {
+        this.logger.warn('Comment author not found');
+        return;
+      }
+
+      const commentAuthorName = commentAuthor.displayName;
+
+      // Get group info
+      const groupDoc = await this.groupModel.findById(diaryDoc.group).exec();
+      if (!groupDoc) {
+        this.logger.warn('Group not found for comment notification');
+        return;
+      }
+
+      const notifications: Array<{
+        token: string;
+        title: string;
+        body: string;
+        data: Record<string, string>;
+      }> = [];
+
+      // Case 1: Reply to a comment (대댓글)
+      if (parentCommentId) {
+        const parentComment = await this.diaryCommentModel
+          .findById(parentCommentId)
+          .exec();
+
+        if (parentComment) {
+          const parentCommentAuthor = await this.accountModel
+            .findById(parentComment.account)
+            .exec();
+
+          // Send notification to parent comment author (자기 자신 제외)
+          if (
+            parentCommentAuthor &&
+            parentCommentAuthor._id !== authorUid &&
+            parentCommentAuthor.fcmToken
+          ) {
+            notifications.push({
+              token: parentCommentAuthor.fcmToken,
+              title: '새로운 답글이 달렸습니다',
+              body: `${commentAuthorName}님이 답글을 남겼습니다`,
+              data: {
+                type: 'comment',
+                groupId: diaryDoc.group,
+                groupName: groupDoc.displayName,
+                diaryId: diaryId,
+                commentId: commentId,
+                authorName: commentAuthorName,
+              },
+            });
+          }
+        }
+      }
+
+      // Case 2: Comment on diary (일기에 댓글)
+      // Send notification to diary author (자기 자신 제외)
+      const diaryAuthor = await this.accountModel.findById(diaryDoc.account).exec();
+      if (diaryAuthor && diaryAuthor._id !== authorUid && diaryAuthor.fcmToken) {
+        notifications.push({
+          token: diaryAuthor.fcmToken,
+          title: '새로운 댓글이 달렸습니다',
+          body: `${commentAuthorName}님이 댓글을 남겼습니다`,
+          data: {
+            type: 'comment',
+            groupId: diaryDoc.group,
+            groupName: groupDoc.displayName,
+            diaryId: diaryId,
+            commentId: commentId,
+            authorName: commentAuthorName,
+          },
+        });
+      }
+
+      if (notifications.length === 0) {
+        return;
+      }
+
+      // Send notifications
+      await this.fcmService.sendMultipleNotifications(notifications);
+
+      this.logger.log(`Sent ${notifications.length} comment notification(s)`);
+    } catch (error) {
+      this.logger.error('Error sending comment notification:', error);
+    }
   }
 
   private async buildCommentResponse(
