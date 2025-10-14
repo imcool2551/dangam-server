@@ -121,7 +121,7 @@ export class GroupService {
     }
 
     return {
-      inviteLink: `https://dangam.app/invite/${group.inviteToken}`,
+      inviteLink: `https://growdangams.com/invite/${group.inviteToken}`,
     };
   }
 
