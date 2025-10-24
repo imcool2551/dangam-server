@@ -144,12 +144,20 @@ export class GroupService {
       throw new BadRequestException('Already a member of this group');
     }
 
-    // Add user as member
-    await this.accountRolesModel.create({
-      account: auth.uid,
-      group: group._id,
-      role: AccountRolesType.member,
-    });
+    try {
+      // Add user as member
+      await this.accountRolesModel.create({
+        account: auth.uid,
+        group: group._id,
+        role: AccountRolesType.member,
+      });
+    } catch (error) {
+      // Handle duplicate key error from unique index
+      if (error.code === 11000) {
+        throw new BadRequestException('Already a member of this group');
+      }
+      throw error;
+    }
 
     // Update group's last activity
     await this.groupModel.updateOne(

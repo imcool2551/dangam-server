@@ -25,4 +25,7 @@ export class AccountRoles {
 
 export const AccountRolesSchema = SchemaFactory.createForClass(AccountRoles)
 
+// Compound unique index to prevent duplicate memberships
+AccountRolesSchema.index({ account: 1, group: 1 }, { unique: true })
+
 export type AccountRolesDocument = HydratedDocument<AccountRoles>
