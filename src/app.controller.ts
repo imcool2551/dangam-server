@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
+import { PublicApi } from './auth/decorators/role.decorator';
 
 @Controller()
 export class AppController {
@@ -8,6 +9,7 @@ export class AppController {
     return 'health';
   }
 
+  @PublicApi()
   @Get('/invite/:token')
   getInvitePage(@Param('token') token: string, @Res() res: Response) {
     const html = `
