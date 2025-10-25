@@ -77,10 +77,11 @@ export class AuthService {
       const kakaoUserId = kakaoPayload.sub;
       const displayName = kakaoPayload.nickname || 'Unknown User';
 
-      // 기존 계정 찾기
+      // 기존 계정 찾기 (삭제되지 않은 계정만)
       const existingAccount = await this.accountModel.findOne({
         ssoType: SsoType.KAKAO,
         ssoId: kakaoUserId,
+        deleted: false,
       });
 
       if (existingAccount) {
@@ -94,7 +95,7 @@ export class AuthService {
           refreshToken: tokens.refreshToken,
         };
       } else {
-        // 신규 사용자 - 회원가입
+        // 신규 사용자 - 회원가입 (탈퇴한 계정도 새로 가입)
         const newAccount = new this.accountModel({
           ssoType: SsoType.KAKAO,
           ssoId: kakaoUserId,
@@ -146,8 +147,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // 사용자 조회
-    const account = await this.accountModel.findById(payload.uid);
+    // 사용자 조회 (삭제되지 않은 계정만)
+    const account = await this.accountModel.findOne({
+      _id: payload.uid,
+      deleted: false,
+    });
     if (!account) {
       throw new UnauthorizedException('User not found');
     }
@@ -192,7 +196,7 @@ export class AuthService {
     // 사용자의 모든 그룹 멤버십 삭제
     await this.accountRolesModel.deleteMany({ account: accountId });
 
-    // 계정 삭제
-    await this.accountModel.findByIdAndDelete(accountId);
+    // 계정 soft delete (hard delete 대신)
+    await this.accountModel.findByIdAndUpdate(accountId, { deleted: true });
   }
 }

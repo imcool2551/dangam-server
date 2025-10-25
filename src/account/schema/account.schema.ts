@@ -22,6 +22,9 @@ export class Account {
 
   @Prop({ type: String })
   fcmToken?: string;
+
+  @Prop({ type: Boolean, default: false })
+  deleted: boolean;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);
