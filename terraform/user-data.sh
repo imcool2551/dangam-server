@@ -42,13 +42,7 @@ echo "Installing certbot..."
 dnf install -y certbot python3-certbot-nginx
 
 # ============================================
-# Create App Directory
-# ============================================
-mkdir -p /home/ec2-user/app/logs
-chown -R ec2-user:ec2-user /home/ec2-user/app
-
-# ============================================
-# Create fetch-env.sh Script
+# Create fetch-env.sh Script (saves to /home/ec2-user/.env.app)
 # ============================================
 cat > /home/ec2-user/fetch-env.sh << 'FETCH_ENV_SCRIPT'
 #!/bin/bash
@@ -57,6 +51,7 @@ set -e
 PROJECT_NAME="$1"
 ENVIRONMENT="$2"
 AWS_REGION="$3"
+OUTPUT_FILE="${4:-/home/ec2-user/app/.env}"
 
 aws ssm get-parameters-by-path \
   --path "/$PROJECT_NAME/$ENVIRONMENT/" \
@@ -66,21 +61,46 @@ aws ssm get-parameters-by-path \
   --output text | while read -r name value; do
     param_name=$(echo "$name" | awk -F'/' '{print $NF}')
     echo "$param_name=\"$value\""
-done > /home/ec2-user/app/.env
+done > $OUTPUT_FILE
 
-echo "AWS_REGION=\"$AWS_REGION\"" >> /home/ec2-user/app/.env
+echo "AWS_REGION=\"$AWS_REGION\"" >> $OUTPUT_FILE
 
-chown ec2-user:ec2-user /home/ec2-user/app/.env
-chmod 600 /home/ec2-user/app/.env
-echo "Environment variables fetched successfully"
+chown ec2-user:ec2-user $OUTPUT_FILE
+chmod 600 $OUTPUT_FILE
+echo "Environment variables saved to $OUTPUT_FILE"
 FETCH_ENV_SCRIPT
 
 chmod +x /home/ec2-user/fetch-env.sh
 chown ec2-user:ec2-user /home/ec2-user/fetch-env.sh
 
-# Fetch environment variables (don't fail if this errors)
+# Fetch environment variables to temp location (not in app folder)
 echo "Fetching environment variables..."
-/home/ec2-user/fetch-env.sh "$PROJECT_NAME" "$ENVIRONMENT" "$AWS_REGION" || echo "Warning: Failed to fetch env vars"
+/home/ec2-user/fetch-env.sh "$PROJECT_NAME" "$ENVIRONMENT" "$AWS_REGION" "/home/ec2-user/.env.app" || echo "Warning: Failed to fetch env vars"
+
+# ============================================
+# Setup GitHub Deploy Key from SSM
+# ============================================
+echo "Setting up GitHub SSH key..."
+mkdir -p /home/ec2-user/.ssh
+chmod 700 /home/ec2-user/.ssh
+
+aws ssm get-parameter \
+  --name "/$PROJECT_NAME/$ENVIRONMENT/GITHUB_DEPLOY_KEY" \
+  --with-decryption \
+  --region $AWS_REGION \
+  --query "Parameter.Value" \
+  --output text > /home/ec2-user/.ssh/id_ed25519 2>/dev/null && {
+    chmod 600 /home/ec2-user/.ssh/id_ed25519
+    chown ec2-user:ec2-user /home/ec2-user/.ssh/id_ed25519
+
+    # Add GitHub to known_hosts
+    ssh-keyscan -t ed25519 github.com >> /home/ec2-user/.ssh/known_hosts 2>/dev/null
+    chown ec2-user:ec2-user /home/ec2-user/.ssh/known_hosts
+
+    echo "GitHub SSH key configured successfully"
+} || echo "Warning: GitHub deploy key not found in SSM"
+
+chown -R ec2-user:ec2-user /home/ec2-user/.ssh
 
 # ============================================
 # Configure Nginx
@@ -110,28 +130,9 @@ systemctl start nginx
 systemctl enable nginx
 
 # ============================================
-# Create deploy.sh Script
+# Create PM2 ecosystem.config.js (in home, not app folder)
 # ============================================
-cat > /home/ec2-user/deploy.sh << 'DEPLOY_SCRIPT'
-#!/bin/bash
-set -e
-
-cd /home/ec2-user/app
-
-pnpm install
-pnpm build
-
-pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
-pm2 save
-DEPLOY_SCRIPT
-
-chmod +x /home/ec2-user/deploy.sh
-chown ec2-user:ec2-user /home/ec2-user/deploy.sh
-
-# ============================================
-# Create PM2 ecosystem.config.js
-# ============================================
-cat > /home/ec2-user/app/ecosystem.config.js << 'PM2_CONFIG'
+cat > /home/ec2-user/ecosystem.config.js << 'PM2_CONFIG'
 module.exports = {
   apps: [{
     name: 'dangam-server',
@@ -149,7 +150,35 @@ module.exports = {
 };
 PM2_CONFIG
 
-chown ec2-user:ec2-user /home/ec2-user/app/ecosystem.config.js
+chown ec2-user:ec2-user /home/ec2-user/ecosystem.config.js
+
+# ============================================
+# Create deploy.sh Script
+# ============================================
+cat > /home/ec2-user/deploy.sh << 'DEPLOY_SCRIPT'
+#!/bin/bash
+set -e
+
+APP_DIR=/home/ec2-user/app
+
+# Move config files into app folder if they exist
+[ -f /home/ec2-user/.env.app ] && mv /home/ec2-user/.env.app $APP_DIR/.env
+[ -f /home/ec2-user/ecosystem.config.js ] && mv /home/ec2-user/ecosystem.config.js $APP_DIR/
+
+# Create logs directory
+mkdir -p $APP_DIR/logs
+
+cd $APP_DIR
+
+pnpm install
+pnpm build
+
+pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+pm2 save
+DEPLOY_SCRIPT
+
+chmod +x /home/ec2-user/deploy.sh
+chown ec2-user:ec2-user /home/ec2-user/deploy.sh
 
 # ============================================
 # Setup PM2 Startup
@@ -181,7 +210,7 @@ echo "User-data script completed at $(date)"
 echo "============================================"
 echo "Next steps:"
 echo "1. SSH: ssh -i ~/.ssh/dangam-key.pem ec2-user@<EIP>"
-echo "2. Clone: cd /home/ec2-user/app && git clone <repo> ."
-echo "3. Deploy: ./deploy.sh"
-echo "4. SSL: ./setup-ssl.sh"
+echo "2. Clone: git clone <repo> /home/ec2-user/app"
+echo "3. Deploy: ~/deploy.sh"
+echo "4. SSL: ~/setup-ssl.sh"
 echo "============================================"
