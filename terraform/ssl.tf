@@ -14,7 +14,8 @@ resource "null_resource" "ssl_setup" {
   provisioner "remote-exec" {
     inline = [
       "sudo certbot --nginx -d ${var.subdomain}.${var.domain_name} --non-interactive --agree-tos --email admin@${var.domain_name} --redirect || echo 'Certbot failed, run manually later'",
-      "echo '0 12 * * * /usr/bin/certbot renew --quiet' | sudo crontab -"
+      "sudo dnf install -y cronie",
+      "(sudo crontab -l 2>/dev/null; echo '0 12 * * * /usr/bin/certbot renew --quiet') | sudo crontab - || true"
     ]
 
     connection {

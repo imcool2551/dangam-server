@@ -51,7 +51,7 @@ set -e
 PROJECT_NAME="$1"
 ENVIRONMENT="$2"
 AWS_REGION="$3"
-OUTPUT_FILE="${4:-/home/ec2-user/app/.env}"
+OUTPUT_FILE="$${4:-/home/ec2-user/app/.env}"
 
 aws ssm get-parameters-by-path \
   --path "/$PROJECT_NAME/$ENVIRONMENT/" \
