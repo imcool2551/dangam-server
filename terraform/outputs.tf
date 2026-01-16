@@ -24,6 +24,11 @@ output "ssm_connect_command" {
   value       = "aws ssm start-session --target ${aws_instance.app.id}"
 }
 
+output "cloudwatch_dashboard_url" {
+  description = "CloudWatch Dashboard URL"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${var.project_name}-${var.environment}"
+}
+
 output "next_steps" {
   description = "Next steps after deployment"
   value       = <<-EOT
@@ -32,14 +37,13 @@ output "next_steps" {
        ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_eip.app.public_ip}
 
     2. Clone your repository:
-       cd /home/ec2-user/app
-       git clone <your-repo-url> .
+       git clone <your-repo-url> /home/ec2-user/app
 
     3. Run deploy script:
-       ./deploy.sh
+       ~/deploy.sh
 
-    4. Setup SSL (after DNS propagates):
-       ./setup-ssl.sh
+    4. Confirm SNS subscription:
+       Check ${var.alert_email} for AWS SNS confirmation email
 
   EOT
 }

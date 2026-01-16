@@ -28,3 +28,18 @@ provider "aws" {
     }
   }
 }
+
+# US East 1 provider for billing metrics (billing is only available in us-east-1)
+provider "aws" {
+  alias   = "us_east_1"
+  region  = "us-east-1"
+  profile = var.aws_profile
+
+  default_tags {
+    tags = {
+      Project     = "dangam-server"
+      Environment = var.environment
+      ManagedBy   = "terraform"
+    }
+  }
+}

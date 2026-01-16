@@ -86,3 +86,19 @@ variable "aws_s3_bucket_name" {
   type        = string
   default     = "dangam-diary"
 }
+
+# ============================================
+# Monitoring & Alerts
+# ============================================
+
+variable "alert_email" {
+  description = "Email address for alerts"
+  type        = string
+  default     = "imcool2551@gmail.com"
+}
+
+variable "billing_threshold" {
+  description = "Monthly billing threshold in USD for alerts"
+  type        = number
+  default     = 30
+}
