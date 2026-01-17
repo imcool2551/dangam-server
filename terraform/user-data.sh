@@ -223,19 +223,19 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CW_CO
       "files": {
         "collect_list": [
           {
-            "file_path": "/home/ec2-user/app/logs/combined.log",
+            "file_path": "/home/ec2-user/app/logs/combined*.log",
             "log_group_name": "/${project_name}/${environment}/app",
             "log_stream_name": "{instance_id}/combined",
             "timestamp_format": "%Y-%m-%dT%H:%M:%S"
           },
           {
-            "file_path": "/home/ec2-user/app/logs/error.log",
+            "file_path": "/home/ec2-user/app/logs/error*.log",
             "log_group_name": "/${project_name}/${environment}/app",
             "log_stream_name": "{instance_id}/error",
             "timestamp_format": "%Y-%m-%dT%H:%M:%S"
           },
           {
-            "file_path": "/home/ec2-user/app/logs/output.log",
+            "file_path": "/home/ec2-user/app/logs/output*.log",
             "log_group_name": "/${project_name}/${environment}/app",
             "log_stream_name": "{instance_id}/output",
             "timestamp_format": "%Y-%m-%dT%H:%M:%S"
