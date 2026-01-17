@@ -66,7 +66,12 @@ aws ssm get-parameters-by-path \
   --query "Parameters[*].[Name,Value]" \
   --output text | while read -r name value; do
     param_name=$(echo "$name" | awk -F'/' '{print $NF}')
-    echo "$param_name=\"$value\""
+    # JSON이면 작은따옴표, 아니면 큰따옴표
+    if [[ "$value" == \{* ]]; then
+      echo "$param_name='$value'"
+    else
+      echo "$param_name=\"$value\""
+    fi
 done > $OUTPUT_FILE
 
 echo "AWS_REGION=\"$AWS_REGION\"" >> $OUTPUT_FILE
