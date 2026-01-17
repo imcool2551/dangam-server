@@ -114,3 +114,9 @@ variable "billing_threshold" {
   type        = number
   default     = 30
 }
+
+variable "error_threshold" {
+  description = "Error count threshold for alerts (per 5 minutes)"
+  type        = number
+  default     = 5
+}

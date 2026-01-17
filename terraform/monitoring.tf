@@ -149,9 +149,37 @@ resource "aws_cloudwatch_dashboard" "main" {
         }
       },
       {
-        type   = "text"
+        type   = "metric"
         x      = 0
         y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Application Error Count"
+          region = var.aws_region
+          metrics = [
+            ["${var.project_name}/${var.environment}", "ErrorCount"]
+          ]
+          period = 300
+          stat   = "Sum"
+        }
+      },
+      {
+        type   = "log"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Recent Error Logs"
+          region = var.aws_region
+          query  = "SOURCE '/${var.project_name}/${var.environment}/app' | filter @message like /ERROR/ | sort @timestamp desc | limit 20"
+        }
+      },
+      {
+        type   = "text"
+        x      = 0
+        y      = 18
         width  = 24
         height = 2
         properties = {

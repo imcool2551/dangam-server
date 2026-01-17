@@ -42,6 +42,12 @@ echo "Installing certbot..."
 dnf install -y certbot python3-certbot-nginx
 
 # ============================================
+# Install CloudWatch Agent
+# ============================================
+echo "Installing CloudWatch Agent..."
+dnf install -y amazon-cloudwatch-agent
+
+# ============================================
 # Create fetch-env.sh Script (saves to /home/ec2-user/.env.app)
 # ============================================
 cat > /home/ec2-user/fetch-env.sh << 'FETCH_ENV_SCRIPT'
@@ -189,6 +195,66 @@ chown ec2-user:ec2-user /home/ec2-user/deploy.sh
 # Setup PM2 Startup
 # ============================================
 env PATH=$PATH:/usr/bin pm2 startup systemd -u ec2-user --hp /home/ec2-user
+
+# ============================================
+# Install and Configure pm2-logrotate
+# ============================================
+echo "Installing pm2-logrotate..."
+su - ec2-user -c "pm2 install pm2-logrotate"
+su - ec2-user -c "pm2 set pm2-logrotate:max_size 10M"
+su - ec2-user -c "pm2 set pm2-logrotate:retain 7"
+su - ec2-user -c "pm2 set pm2-logrotate:compress true"
+su - ec2-user -c "pm2 set pm2-logrotate:rotateInterval '0 0 * * *'"
+
+# ============================================
+# Configure CloudWatch Agent
+# ============================================
+echo "Configuring CloudWatch Agent..."
+mkdir -p /opt/aws/amazon-cloudwatch-agent/etc
+
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CW_CONFIG
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "root"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/home/ec2-user/app/logs/combined.log",
+            "log_group_name": "/${project_name}/${environment}/app",
+            "log_stream_name": "{instance_id}/combined",
+            "timestamp_format": "%Y-%m-%dT%H:%M:%S"
+          },
+          {
+            "file_path": "/home/ec2-user/app/logs/error.log",
+            "log_group_name": "/${project_name}/${environment}/app",
+            "log_stream_name": "{instance_id}/error",
+            "timestamp_format": "%Y-%m-%dT%H:%M:%S"
+          },
+          {
+            "file_path": "/home/ec2-user/app/logs/output.log",
+            "log_group_name": "/${project_name}/${environment}/app",
+            "log_stream_name": "{instance_id}/output",
+            "timestamp_format": "%Y-%m-%dT%H:%M:%S"
+          }
+        ]
+      }
+    }
+  }
+}
+CW_CONFIG
+
+# Start CloudWatch Agent
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config \
+  -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+  -s
+
+systemctl enable amazon-cloudwatch-agent
 
 # ============================================
 # Create SSL Setup Script

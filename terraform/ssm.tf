@@ -6,6 +6,7 @@ resource "aws_ssm_parameter" "db_uri" {
   description = "MongoDB connection string"
   type        = "SecureString"
   value       = var.db_uri
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-db-uri"
@@ -17,6 +18,7 @@ resource "aws_ssm_parameter" "jwt_secret" {
   description = "JWT secret key"
   type        = "SecureString"
   value       = var.jwt_secret
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-jwt-secret"
@@ -28,6 +30,7 @@ resource "aws_ssm_parameter" "kakao_rest_api_key" {
   description = "Kakao REST API key"
   type        = "SecureString"
   value       = var.kakao_rest_api_key
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-kakao-key"
@@ -39,6 +42,7 @@ resource "aws_ssm_parameter" "firebase_service_account" {
   description = "Firebase service account JSON"
   type        = "SecureString"
   value       = var.firebase_service_account
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-firebase-sa"
@@ -50,6 +54,7 @@ resource "aws_ssm_parameter" "github_deploy_key" {
   description = "GitHub deploy key for git clone"
   type        = "SecureString"
   value       = var.github_deploy_key
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-github-deploy-key"
@@ -61,6 +66,7 @@ resource "aws_ssm_parameter" "aws_s3_bucket_name" {
   description = "S3 bucket name"
   type        = "String"
   value       = var.aws_s3_bucket_name
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-s3-bucket"
@@ -72,6 +78,7 @@ resource "aws_ssm_parameter" "cloudfront_domain" {
   description = "CloudFront distribution domain"
   type        = "String"
   value       = aws_cloudfront_distribution.s3_distribution.domain_name
+  overwrite   = true
 
   tags = {
     Name = "${var.project_name}-cloudfront-domain"
