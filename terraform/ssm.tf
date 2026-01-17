@@ -34,6 +34,17 @@ resource "aws_ssm_parameter" "kakao_rest_api_key" {
   }
 }
 
+resource "aws_ssm_parameter" "firebase_service_account" {
+  name        = "/${var.project_name}/${var.environment}/FIREBASE_SERVICE_ACCOUNT"
+  description = "Firebase service account JSON"
+  type        = "SecureString"
+  value       = var.firebase_service_account
+
+  tags = {
+    Name = "${var.project_name}-firebase-sa"
+  }
+}
+
 resource "aws_ssm_parameter" "aws_s3_bucket_name" {
   name        = "/${var.project_name}/${var.environment}/AWS_S3_BUCKET_NAME"
   description = "S3 bucket name"

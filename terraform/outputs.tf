@@ -47,7 +47,7 @@ output "next_steps" {
        ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_eip.app.public_ip}
 
     2. Clone your repository:
-       git clone <your-repo-url> /home/ec2-user/app
+       git clone git@github.com:imcool2551/dangam-server.git /home/ec2-user/app
 
     3. Run deploy script:
        ~/deploy.sh

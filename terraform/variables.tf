@@ -81,6 +81,12 @@ variable "kakao_rest_api_key" {
   sensitive   = true
 }
 
+variable "firebase_service_account" {
+  description = "Firebase service account JSON (stringified)"
+  type        = string
+  sensitive   = true
+}
+
 variable "aws_s3_bucket_name" {
   description = "S3 bucket name for file uploads"
   type        = string

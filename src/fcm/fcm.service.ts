@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
 import { Model } from 'mongoose';
 import { Account, AccountDocument } from '../account/schema/account.schema';
 import * as admin from 'firebase-admin';
-
-import serviceAccount from '../certs/service-account.json';
 
 @Injectable()
 export class FcmService {
@@ -14,8 +13,19 @@ export class FcmService {
   constructor(
     @InjectModel(Account.name)
     private readonly accountModel: Model<AccountDocument>,
+    private readonly configService: ConfigService,
   ) {
-    // Firebase Admin SDK 초기화 (dangam-f1a9b 프로젝트)
+    // Firebase Admin SDK 초기화
+    const serviceAccountJson = this.configService.get<string>(
+      'FIREBASE_SERVICE_ACCOUNT',
+    );
+
+    if (!serviceAccountJson) {
+      this.logger.error('FIREBASE_SERVICE_ACCOUNT environment variable is not set');
+      throw new Error('FIREBASE_SERVICE_ACCOUNT is required');
+    }
+
+    const serviceAccount = JSON.parse(serviceAccountJson);
     this.app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
     });
