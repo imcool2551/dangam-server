@@ -155,26 +155,31 @@ chown ec2-user:ec2-user /home/ec2-user/ecosystem.config.js
 # ============================================
 # Create deploy.sh Script
 # ============================================
-cat > /home/ec2-user/deploy.sh << 'DEPLOY_SCRIPT'
+cat > /home/ec2-user/deploy.sh << DEPLOY_SCRIPT
 #!/bin/bash
 set -e
 
 APP_DIR=/home/ec2-user/app
 
-# Move config files into app folder if they exist
-[ -f /home/ec2-user/.env.app ] && mv /home/ec2-user/.env.app $APP_DIR/.env
-[ -f /home/ec2-user/ecosystem.config.js ] && mv /home/ec2-user/ecosystem.config.js $APP_DIR/
+# Fetch latest environment variables from SSM
+echo "Fetching environment variables from SSM..."
+~/fetch-env.sh "${project_name}" "${environment}" "${aws_region}" \$APP_DIR/.env
+
+# Move ecosystem.config.js if exists (first deploy only)
+[ -f /home/ec2-user/ecosystem.config.js ] && mv /home/ec2-user/ecosystem.config.js \$APP_DIR/
 
 # Create logs directory
-mkdir -p $APP_DIR/logs
+mkdir -p \$APP_DIR/logs
 
-cd $APP_DIR
+cd \$APP_DIR
 
 pnpm install
 pnpm build
 
 pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
 pm2 save
+
+echo "Deploy complete!"
 DEPLOY_SCRIPT
 
 chmod +x /home/ec2-user/deploy.sh
