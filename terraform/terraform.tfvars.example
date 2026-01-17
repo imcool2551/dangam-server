@@ -3,7 +3,8 @@
 # ============================================
 
 # AWS Configuration
-aws_region = "ap-northeast-2"
+aws_region  = "ap-northeast-2"
+aws_profile = "dangam"  # AWS CLI 프로필 이름
 
 # Project Configuration
 project_name = "dangam-server"
@@ -28,4 +29,16 @@ node_version = "20"
 db_uri             = "mongodb+srv://username:password@cluster.mongodb.net/dbname"
 jwt_secret         = "your-jwt-secret-key"
 kakao_rest_api_key = "your-kakao-rest-api-key"
-aws_s3_bucket_name = "dangam-diary"
+
+# ============================================
+# S3 & CloudFront
+# ============================================
+
+aws_s3_bucket_name = "dangam-diary"  # 기존 S3 버킷 이름
+
+# ============================================
+# Monitoring & Alerts
+# ============================================
+
+alert_email       = "your-email@example.com"  # 알람 수신 이메일
+billing_threshold = 30  # 월 비용 알람 임계값 (USD)

@@ -29,6 +29,16 @@ output "cloudwatch_dashboard_url" {
   value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${var.project_name}-${var.environment}"
 }
 
+output "cloudfront_url" {
+  description = "CloudFront CDN URL for S3"
+  value       = "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront Distribution ID"
+  value       = aws_cloudfront_distribution.s3_distribution.id
+}
+
 output "next_steps" {
   description = "Next steps after deployment"
   value       = <<-EOT

@@ -45,5 +45,16 @@ resource "aws_ssm_parameter" "aws_s3_bucket_name" {
   }
 }
 
+resource "aws_ssm_parameter" "cloudfront_domain" {
+  name        = "/${var.project_name}/${var.environment}/CLOUDFRONT_DOMAIN"
+  description = "CloudFront distribution domain"
+  type        = "String"
+  value       = aws_cloudfront_distribution.s3_distribution.domain_name
+
+  tags = {
+    Name = "${var.project_name}-cloudfront-domain"
+  }
+}
+
 # Note: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 # are not needed if EC2 uses IAM Role for S3 access (recommended)
