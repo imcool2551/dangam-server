@@ -34,6 +34,11 @@ kakao_rest_api_key = "your-kakao-rest-api-key"
 # cat service-account.json | jq -c '.' 로 minify 가능
 firebase_service_account = "{\"type\":\"service_account\",\"project_id\":\"...\",\"private_key\":\"...\"}"
 
+# GitHub Deploy Key (private key)
+# GitHub repo → Settings → Deploy Keys에서 생성
+# cat ~/.ssh/github_deploy_key 로 확인
+github_deploy_key = "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----"
+
 # ============================================
 # S3 & CloudFront
 # ============================================

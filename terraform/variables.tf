@@ -87,6 +87,12 @@ variable "firebase_service_account" {
   sensitive   = true
 }
 
+variable "github_deploy_key" {
+  description = "GitHub deploy key (private key for git clone)"
+  type        = string
+  sensitive   = true
+}
+
 variable "aws_s3_bucket_name" {
   description = "S3 bucket name for file uploads"
   type        = string

@@ -45,6 +45,17 @@ resource "aws_ssm_parameter" "firebase_service_account" {
   }
 }
 
+resource "aws_ssm_parameter" "github_deploy_key" {
+  name        = "/${var.project_name}/${var.environment}/GITHUB_DEPLOY_KEY"
+  description = "GitHub deploy key for git clone"
+  type        = "SecureString"
+  value       = var.github_deploy_key
+
+  tags = {
+    Name = "${var.project_name}-github-deploy-key"
+  }
+}
+
 resource "aws_ssm_parameter" "aws_s3_bucket_name" {
   name        = "/${var.project_name}/${var.environment}/AWS_S3_BUCKET_NAME"
   description = "S3 bucket name"
