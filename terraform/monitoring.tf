@@ -32,7 +32,7 @@ resource "aws_sns_topic_subscription" "billing_email" {
 # ============================================
 resource "aws_cloudwatch_metric_alarm" "ec2_stopped" {
   alarm_name          = "${var.project_name}-${var.environment}-ec2-stopped"
-  comparison_operator = "LessThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "StatusCheckFailed"
   namespace           = "AWS/EC2"
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_stopped" {
     InstanceId = aws_instance.app.id
   }
 
-  treat_missing_data = "breaching"
+  treat_missing_data = "notBreaching"
 }
 
 # ============================================
