@@ -43,6 +43,27 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Policy for S3 access (file uploads)
+resource "aws_iam_role_policy" "s3_policy" {
+  name = "${var.project_name}-${var.environment}-s3-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::${var.aws_s3_bucket_name}/*"
+      }
+    ]
+  })
+}
+
 # Policy for CloudWatch Logs access
 resource "aws_iam_role_policy" "cloudwatch_logs_policy" {
   name = "${var.project_name}-${var.environment}-cloudwatch-logs-policy"
