@@ -19,7 +19,7 @@ import { WellKnownModule } from './well-known/well-known.module';
       isGlobal: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, 'assets'),
+      rootPath: join(__dirname, '..', 'assets'),
       serveRoot: '/assets',
     }),
     // Outer Dependency Modules
