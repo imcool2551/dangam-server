@@ -54,6 +54,9 @@ export class DiaryResponse {
   }[]
   account: string
   displayName: string
+  commentCount: number
+  likeCount: number
+  liked: boolean
   createdAt: number
   updatedAt: number
 }

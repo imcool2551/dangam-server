@@ -26,6 +26,8 @@ export class CommentResponse {
     displayName: string;
   };
   deleted: boolean;
+  likeCount: number;
+  liked: boolean;
   createdAt: number;
   updatedAt: number;
   replies?: CommentResponse[];

@@ -6,8 +6,12 @@ import {
   DiaryComment,
   DiaryCommentSchema,
 } from './schema/diary-comment.schema';
+import { DiaryLike, DiaryLikeSchema } from './schema/diary-like.schema';
+import { CommentLike, CommentLikeSchema } from './schema/comment-like.schema';
 import { DiaryService } from './services/diary.service';
 import { DiaryCommentService } from './services/diary-comment.service';
+import { DiaryLikeService } from './services/diary-like.service';
+import { CommentLikeService } from './services/comment-like.service';
 import { DiaryImageProcessor } from './components/diary-image-processor';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountModule } from '../account/account.module';
@@ -26,6 +30,14 @@ const DiaryMongooseModule = MongooseModule.forFeature([
     name: DiaryComment.name,
     schema: DiaryCommentSchema,
   },
+  {
+    name: DiaryLike.name,
+    schema: DiaryLikeSchema,
+  },
+  {
+    name: CommentLike.name,
+    schema: CommentLikeSchema,
+  },
 ]);
 
 @Module({
@@ -42,6 +54,8 @@ const DiaryMongooseModule = MongooseModule.forFeature([
     DiaryService,
     DiaryCommentService,
     DiaryQueryService,
+    DiaryLikeService,
+    CommentLikeService,
     DiaryImageProcessor,
   ],
   exports: [DiaryMongooseModule],

@@ -18,6 +18,7 @@ import { Diary, DiaryDocument } from '../schema/diary.schema';
 import { FcmService } from '../../fcm/fcm.service';
 import { Account, AccountDocument } from '../../account/schema/account.schema';
 import { Group, GroupDocument } from '../../group/schemas/group.schema';
+import { CommentLikeService } from './comment-like.service';
 
 @Injectable()
 export class DiaryCommentService {
@@ -33,6 +34,7 @@ export class DiaryCommentService {
     @InjectModel(Group.name)
     private readonly groupModel: Model<GroupDocument>,
     private readonly fcmService: FcmService,
+    private readonly commentLikeService: CommentLikeService,
   ) {}
 
   async createComment(
@@ -68,7 +70,7 @@ export class DiaryCommentService {
     return this.buildCommentResponse(comment);
   }
 
-  async getComments(diary: string): Promise<CommentResponse[]> {
+  async getComments(auth: AuthPayload, diary: string): Promise<CommentResponse[]> {
     const comments = await this.diaryCommentModel.aggregate([
       {
         $match: {
@@ -91,12 +93,17 @@ export class DiaryCommentService {
       },
     ]);
 
+    // Get like info for all comments
+    const commentIds = comments.map((c) => c._id);
+    const likeInfoMap = await this.commentLikeService.getLikeInfoForComments(auth.uid, commentIds);
+
     // Build hierarchical structure
     const commentMap = new Map<string, CommentResponse>();
     const rootComments: CommentResponse[] = [];
 
     // First pass: create all comment objects
     for (const comment of comments) {
+      const likeInfo = likeInfoMap.get(comment._id) || { liked: false, likeCount: 0 };
       const commentResponse: CommentResponse = {
         _id: comment._id,
         diary: comment.diary,
@@ -107,6 +114,8 @@ export class DiaryCommentService {
           displayName: comment.author.displayName,
         },
         deleted: comment.deleted || false,
+        likeCount: likeInfo.likeCount,
+        liked: likeInfo.liked,
         createdAt: comment.createdAt.getTime(),
         updatedAt: comment.updatedAt.getTime(),
         replies: [],
@@ -291,6 +300,7 @@ export class DiaryCommentService {
 
   private async buildCommentResponse(
     comment: DiaryCommentDocument,
+    likeInfo: { liked: boolean; likeCount: number } = { liked: false, likeCount: 0 },
   ): Promise<CommentResponse> {
     await comment.populate('account', 'displayName');
 
@@ -305,6 +315,8 @@ export class DiaryCommentService {
       content: comment.content,
       parentComment: comment.parentComment,
       deleted: comment.deleted ?? false,
+      likeCount: likeInfo.likeCount,
+      liked: likeInfo.liked,
       author: {
         uid: account._id,
         displayName: account.displayName,
