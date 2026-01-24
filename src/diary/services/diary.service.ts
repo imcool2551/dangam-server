@@ -126,7 +126,7 @@ export class DiaryService {
       // Prepare FCM notifications
       const notifications = membersWithTokens.map((account) => ({
         token: account.fcmToken!,
-        title: '새로운 일기가 작성되었습니다',
+        title: `[${groupDoc.displayName}] 새로운 일기`,
         body: `${authorName}님이 새 일기를 작성했습니다`,
         data: {
           type: 'diary',

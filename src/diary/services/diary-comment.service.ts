@@ -251,7 +251,7 @@ export class DiaryCommentService {
           ) {
             notifications.push({
               token: parentCommentAuthor.fcmToken,
-              title: '새로운 답글이 달렸습니다',
+              title: `[${groupDoc.displayName}] 새로운 답글`,
               body: `${commentAuthorName}님이 답글을 남겼습니다`,
               data: {
                 type: 'comment',
@@ -272,7 +272,7 @@ export class DiaryCommentService {
       if (diaryAuthor && diaryAuthor._id !== authorUid && diaryAuthor.fcmToken) {
         notifications.push({
           token: diaryAuthor.fcmToken,
-          title: '새로운 댓글이 달렸습니다',
+          title: `[${groupDoc.displayName}] 새로운 댓글`,
           body: `${commentAuthorName}님이 댓글을 남겼습니다`,
           data: {
             type: 'comment',
