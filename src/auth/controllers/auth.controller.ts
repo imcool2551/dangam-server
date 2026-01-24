@@ -1,6 +1,13 @@
-import { Body, Controller, Post, Delete, HttpCode } from '@nestjs/common';
+import { Body, Controller, Post, Delete, Get, Query } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { SignInResponse, SignInDto, RefreshTokenDto, RefreshTokenResponse } from '../dto/auth.dto';
+import {
+  SignInResponse,
+  SignInDto,
+  RefreshTokenDto,
+  RefreshTokenResponse,
+  SignUpDto,
+  CheckEmailResponse,
+} from '../dto/auth.dto';
 import { PublicApi } from '../decorators/role.decorator';
 import { Auth } from '../decorators/auth.decorator';
 import { AuthPayload } from '../interfaces/auth.interface';
@@ -13,6 +20,18 @@ export class AuthController {
   @PublicApi()
   signIn(@Body() dto: SignInDto): Promise<SignInResponse> {
     return this.authService.signIn(dto);
+  }
+
+  @Post('sign-up')
+  @PublicApi()
+  signUp(@Body() dto: SignUpDto): Promise<SignInResponse> {
+    return this.authService.signUp(dto);
+  }
+
+  @Get('check-email')
+  @PublicApi()
+  checkEmail(@Query('email') email: string): Promise<CheckEmailResponse> {
+    return this.authService.checkEmailExists(email);
   }
 
   @Post('refresh')

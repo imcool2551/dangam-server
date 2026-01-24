@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsEmail,
+  MinLength,
+} from 'class-validator';
 import { SsoType } from '../interfaces/sso.enum';
 
 export class SignInDto {
@@ -6,8 +13,33 @@ export class SignInDto {
   ssoType: SsoType;
 
   @IsString()
+  @IsOptional()
+  idToken?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
+}
+
+export class SignUpDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  @IsString()
   @IsNotEmpty()
-  idToken: string;
+  displayName: string;
+}
+
+export class CheckEmailResponse {
+  exists: boolean;
 }
 
 export class RefreshTokenDto {

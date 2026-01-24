@@ -14,8 +14,14 @@ export class Account {
   @Prop({ type: String, enum: SsoType, required: true })
   ssoType: SsoType;
 
-  @Prop({ type: String, required: true })
-  ssoId: string;
+  @Prop({ type: String })
+  ssoId?: string;
+
+  @Prop({ type: String, sparse: true, unique: true })
+  email?: string;
+
+  @Prop({ type: String })
+  passwordHash?: string;
 
   @Prop({ type: String, required: true })
   displayName: string;

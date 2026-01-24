@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import * as bcrypt from 'bcrypt';
 import { Account, AccountDocument } from '../../account/schema/account.schema';
 import { AccountRoles, AccountRolesDocument } from '../../account/schema/account-roles.schema';
 import { Diary, DiaryDocument } from '../../diary/schema/diary.schema';
@@ -16,6 +17,8 @@ import {
   RefreshTokenResponse,
   SignInDto,
   SignInResponse,
+  SignUpDto,
+  CheckEmailResponse,
 } from '../dto/auth.dto';
 import { SsoType } from '../interfaces/sso.enum';
 import { AccountRolesType } from '../interfaces/auth.interface';
@@ -52,12 +55,102 @@ export class AuthService {
   async signIn(dto: SignInDto): Promise<SignInResponse> {
     switch (dto.ssoType) {
       case SsoType.KAKAO: {
+        if (!dto.idToken) {
+          throw new BadRequestException('idToken is required for Kakao login');
+        }
         return this.kakaoSignIn(dto.idToken);
+      }
+      case SsoType.EMAIL: {
+        if (!dto.email || !dto.password) {
+          throw new BadRequestException(
+            'email and password are required for email login',
+          );
+        }
+        return this.emailSignIn(dto.email, dto.password);
       }
       default: {
         throw new BadRequestException('Unsupported sign in type');
       }
     }
+  }
+
+  private async emailSignIn(
+    email: string,
+    password: string,
+  ): Promise<SignInResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const account = await this.accountModel.findOne({
+      ssoType: SsoType.EMAIL,
+      email: normalizedEmail,
+      deleted: false,
+    });
+
+    if (!account || !account.passwordHash) {
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다',
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, account.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다',
+      );
+    }
+
+    const tokens = this.generateTokens(account);
+    return {
+      uid: account._id,
+      displayName: account.displayName,
+      isNewUser: false,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async signUp(dto: SignUpDto): Promise<SignInResponse> {
+    const normalizedEmail = dto.email.toLowerCase().trim();
+
+    const existingAccount = await this.accountModel.findOne({
+      email: normalizedEmail,
+      deleted: false,
+    });
+
+    if (existingAccount) {
+      throw new ConflictException('이미 사용 중인 이메일입니다');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const newAccount = new this.accountModel({
+      ssoType: SsoType.EMAIL,
+      email: normalizedEmail,
+      passwordHash,
+      displayName: dto.displayName,
+    });
+
+    const savedAccount = await newAccount.save();
+    const tokens = this.generateTokens(savedAccount);
+
+    return {
+      uid: savedAccount._id,
+      displayName: savedAccount.displayName,
+      isNewUser: true,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async checkEmailExists(email: string): Promise<CheckEmailResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingAccount = await this.accountModel.findOne({
+      email: normalizedEmail,
+      deleted: false,
+    });
+
+    return { exists: !!existingAccount };
   }
 
   private async kakaoSignIn(idToken: string): Promise<SignInResponse> {
