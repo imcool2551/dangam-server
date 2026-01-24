@@ -37,6 +37,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/serve-static": "^5.0.4",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",

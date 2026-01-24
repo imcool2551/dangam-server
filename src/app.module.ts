@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { GroupModule } from './group/group.module';
 import { AuthModule } from './auth/auth.module';
 import { AccountModule } from './account/account.module';
@@ -15,6 +17,10 @@ import { WellKnownModule } from './well-known/well-known.module';
     ConfigModule.forRoot({
       cache: true,
       isGlobal: true,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, 'assets'),
+      serveRoot: '/assets',
     }),
     // Outer Dependency Modules
     MongooseModule.forRootAsync({
