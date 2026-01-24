@@ -52,8 +52,10 @@ export class DiaryResponse {
     src?: AssetLocation
     dst?: AssetLocation
   }[]
-  account: string
-  displayName: string
+  author: {
+    uid: string
+    displayName: string
+  }
   commentCount: number
   likeCount: number
   liked: boolean

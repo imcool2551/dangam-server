@@ -25,8 +25,10 @@ export function toDiaryResponse(
     title: diary.title,
     content: diary.content,
     images: diary.images,
-    account: accountUid,
-    displayName: displayName,
+    author: {
+      uid: accountUid,
+      displayName: displayName,
+    },
     commentCount: extraInfo.commentCount,
     likeCount: extraInfo.likeCount,
     liked: extraInfo.liked,
