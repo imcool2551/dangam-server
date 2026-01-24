@@ -8,6 +8,7 @@ import { AccountModule } from './account/account.module';
 import { S3Module } from './s3/s3.module';
 import { DiaryModule } from './diary/diary.module';
 import { FcmModule } from './fcm/fcm.module';
+import { WellKnownModule } from './well-known/well-known.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { FcmModule } from './fcm/fcm.module';
     AuthModule,
     DiaryModule,
     GroupModule,
+    WellKnownModule,
   ],
   controllers: [AppController],
 })
