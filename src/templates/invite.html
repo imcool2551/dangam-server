@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단감 초대</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FFEBCD 0%, #FFE4B5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #d97706;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .loading {
+            margin: 30px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #d97706;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fallback {
+            display: none;
+            margin-top: 30px;
+        }
+        .fallback.show {
+            display: block;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px 0;
+            background: #d97706;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #b45309;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .guide {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fffbeb;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.8;
+            text-align: left;
+        }
+        .guide-title {
+            font-weight: 600;
+            color: #d97706;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .guide ol {
+            margin-left: 20px;
+        }
+        .guide li {
+            margin: 8px 0;
+        }
+        .store-links {
+            margin-top: 15px;
+        }
+        .store-btn {
+            background: #16a34a;
+            font-size: 14px;
+            padding: 12px 20px;
+        }
+        .store-btn:hover {
+            background: #15803d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://api-v1.growdangams.com/assets/logo.png" alt="단감" class="logo" onerror="this.style.display='none'">
+        <div class="title">단감</div>
+        <p class="subtitle">그룹 초대에 응답하는 중...</p>
+
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="fallback" id="fallback">
+            <p style="margin-bottom: 20px; color: #666;">앱이 열리지 않나요?</p>
+            <button class="btn" id="retryBtn">앱에서 열기</button>
+
+            <div class="guide">
+                <span class="guide-title">카카오톡에서 보고 계신가요?</span>
+                <ol>
+                    <li>우측 상단 <strong>⋮</strong> 메뉴 클릭</li>
+                    <li><strong>다른 브라우저로 열기</strong> 선택</li>
+                    <li>다시 링크를 클릭하세요</li>
+                </ol>
+            </div>
+
+            <div class="guide">
+                <span class="guide-title">앱이 설치되지 않았나요?</span>
+                <div class="store-links">
+                    <a href="https://play.google.com/store/apps/details?id=com.dangam.app" class="btn store-btn">
+                        Google Play에서 다운로드
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = '{{TOKEN}}';
+
+        function openApp() {
+            window.location.href = 'dangam://invite/' + token;
+        }
+
+        openApp();
+
+        const fallbackTimer = setTimeout(() => {
+            document.getElementById('fallback').classList.add('show');
+        }, 2000);
+
+        document.getElementById('retryBtn').onclick = () => {
+            openApp();
+        };
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                clearTimeout(fallbackTimer);
+            } else if (document.visibilityState === 'visible') {
+                document.getElementById('fallback').classList.remove('show');
+            }
+        });
+
+        window.addEventListener('pagehide', () => {
+            clearTimeout(fallbackTimer);
+        });
+    </script>
+</body>
+</html>

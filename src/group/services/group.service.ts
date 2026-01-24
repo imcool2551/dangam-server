@@ -121,7 +121,7 @@ export class GroupService {
     }
 
     return {
-      inviteLink: `https://growdangams.com/dangam/invite/${group.inviteToken}`,
+      inviteLink: `https://api-v1.growdangams.com/invite/${group.inviteToken}`,
     };
   }
 
