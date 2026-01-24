@@ -9,8 +9,9 @@ export class AppController {
   private inviteTemplate: string;
 
   constructor() {
+    // dist/templates/invite.html 경로로 접근
     this.inviteTemplate = readFileSync(
-      join(__dirname, 'templates', 'invite.html'),
+      join(process.cwd(), 'dist', 'templates', 'invite.html'),
       'utf-8',
     );
   }
