@@ -44,7 +44,9 @@ export class DiaryQueryService {
     const query: any = { group, deleted: false };
 
     // Add cursor filter if provided
+    console.log('[DEBUG] dto.next:', JSON.stringify(dto.next), 'type:', typeof dto.next);
     const cursorFilter = parseCursorOf('createdAt', dto.next);
+    console.log('[DEBUG] cursorFilter:', JSON.stringify(cursorFilter));
     if (cursorFilter) {
       Object.assign(query, cursorFilter);
     }
