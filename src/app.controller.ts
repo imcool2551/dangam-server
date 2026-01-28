@@ -24,7 +24,7 @@ export class AppController {
   @PublicApi()
   @Get('/invite/:token')
   getInvitePage(@Param('token') token: string, @Res() res: Response) {
-    const html = this.inviteTemplate.replace('{{TOKEN}}', token);
+    const html = this.inviteTemplate.replaceAll('{{TOKEN}}', token);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   }
