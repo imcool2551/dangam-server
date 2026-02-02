@@ -19,8 +19,7 @@ export class GroupUpdateDto {
   displayName: string;
 
   @IsOptional()
-  @IsString()
-  thumbnailImageKey?: string;
+  thumbnailImageKey?: string | null; // null: 이미지 삭제
 }
 
 export class GroupResponse {

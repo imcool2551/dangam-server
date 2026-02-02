@@ -194,22 +194,36 @@ export class GroupService {
       displayName: dto.displayName,
     };
 
+    let updatedGroup: GroupDocument | null;
+
     if (dto.thumbnailImageKey) {
+      // 새 이미지 설정
       updateData.thumbnailImage = {
         src: {
           bucket: this.bucketName,
           key: dto.thumbnailImageKey,
         } as AssetLocation,
       };
+      updatedGroup = await this.groupModel.findOneAndUpdate(
+        { _id: group },
+        updateData,
+        { new: true },
+      );
+    } else if (dto.thumbnailImageKey === null) {
+      // 이미지 삭제 (null이 명시적으로 전달된 경우)
+      updatedGroup = await this.groupModel.findOneAndUpdate(
+        { _id: group },
+        { $set: updateData, $unset: { thumbnailImage: 1 } },
+        { new: true },
+      );
     } else {
-      updateData.thumbnailImage = undefined;
+      // 이미지 변경 없음 (undefined인 경우)
+      updatedGroup = await this.groupModel.findOneAndUpdate(
+        { _id: group },
+        updateData,
+        { new: true },
+      );
     }
-
-    const updatedGroup = await this.groupModel.findOneAndUpdate(
-      { _id: group },
-      updateData,
-      { new: true },
-    );
 
     if (updatedGroup === null) {
       throw new BadRequestException();
